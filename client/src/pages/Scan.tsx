@@ -77,10 +77,22 @@ export default function Scan() {
   );
 
   const document = useMemo<VerificationDocument>(() => {
+    const local = getPreviewDocument(params?.id, userIdentifier);
     if (serverQuery.data) {
-      return serverDocumentToVerification(serverQuery.data.document, serverQuery.data.checks);
+      const doc = serverDocumentToVerification(serverQuery.data.document, serverQuery.data.checks);
+      if (!doc.previewUrl && local?.previewUrl) {
+        doc.previewUrl = local.previewUrl;
+      }
+      return doc;
     }
-    return getPreviewDocument(params?.id, userIdentifier) ?? getPreviewDocument("doc-verified-001")!;
+    if (local) return local;
+
+    if (params?.id && !params.id.startsWith("doc-")) {
+      const latest = getPreviewDocument("latest");
+      if (latest) return latest;
+    }
+
+    return getPreviewDocument(params?.id) ?? getPreviewDocument("doc-verified-001")!;
   }, [serverQuery.data, params?.id, userIdentifier]);
 
   const [activeStage, setActiveStage] = useState(0);
@@ -121,7 +133,8 @@ export default function Scan() {
   useEffect(() => {
     if (activeStage < PIPELINE_STEPS.length) return;
     const redirectTimer = window.setTimeout(() => {
-      setLocation(`/report/${document.id}`);
+      const targetId = params?.id && !params.id.startsWith("doc-") ? params.id : document.id;
+      setLocation(`/report/${targetId}`);
     }, 900);
     return () => window.clearTimeout(redirectTimer);
   }, [activeStage, document.id, setLocation]);

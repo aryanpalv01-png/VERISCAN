@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import gc
 import json
 import os
 from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
@@ -25,6 +26,7 @@ from modules.trufor_adapter import run_trufor_analysis
 from modules.catnet_adapter import run_catnet_analysis
 from modules.hf_detector import detect_ai_generation
 from modules.fusion_engine import fuse_scores
+from modules.pii_redactor import redact_pii_in_memory
 
 app = FastAPI(
     title="VeriScan Forensic Analysis Microservice",
@@ -52,6 +54,12 @@ class AnalyzeUrlRequest(BaseModel):
     document_type: str = "other"
 
 
+class RedactPiiRequest(BaseModel):
+    image_url: str | None = None
+    file_url: str | None = None
+    content_base64: str | None = None
+
+
 class FuseScoresRequest(BaseModel):
     checks: list[dict[str, Any]]
 
@@ -72,10 +80,39 @@ class SupabaseWebhookPayload(BaseModel):
     record: SupabaseWebhookRecord | None = None
 
 
+def load_image_bytes_in_memory(url_or_data: str) -> bytes:
+    """
+    Strict zero-disk in-memory loader.
+    Never writes any bytes to local storage or temporary files.
+    """
+    url = url_or_data.strip()
+    if url.startswith("data:"):
+        _, _, data = url.partition(",")
+        return base64.b64decode(data)
+
+    if url.startswith("http://") or url.startswith("https://"):
+        buffer = BytesIO()
+        with requests.get(url, stream=True, timeout=20) as resp:
+            resp.raise_for_status()
+            for chunk in resp.iter_content(chunk_size=65536):
+                if chunk:
+                    buffer.write(chunk)
+        return buffer.getvalue()
+
+    if url.startswith("file://") or os.path.exists(url):
+        path = url.replace("file://", "")
+        with open(path, "rb") as f:
+            return f.read()
+
+    raise ValueError(f"Invalid or unsupported image source: {url[:30]}...")
+
+
 # Helper to convert raw bytes to PIL Image
 def bytes_to_image(raw_bytes: bytes) -> Image.Image | None:
     try:
-        return Image.open(BytesIO(raw_bytes)).convert("RGB")
+        img = Image.open(BytesIO(raw_bytes))
+        img.load()
+        return img.convert("RGB")
     except Exception:
         return None
 
@@ -292,16 +329,18 @@ def fuse_scores_endpoint(payload: FuseScoresRequest) -> dict[str, Any]:
 @app.post("/analyze-full")
 async def analyze_full(
     file: UploadFile = File(...),
-    documentType: str = Form("other"),
+    documentType: str | None = Form(None),
+    document_type: str | None = Form(None),
 ) -> dict[str, Any]:
     raw_bytes = await file.read()
     filename = file.filename or "upload"
     mime_type = file.content_type or "image/jpeg"
+    doc_type = documentType or document_type or "other"
 
     # Fast Branch
     fast_results = run_fast_checks(
         raw_bytes=raw_bytes,
-        document_type=documentType,
+        document_type=doc_type,
         filename=filename,
         mime_type=mime_type,
     )
@@ -364,6 +403,51 @@ async def ocr_endpoint(request: Request) -> dict[str, Any]:
         "fields": typo.get("extracted_fields", {}),
         "flaggedRegion": typo.get("flagged_region"),
     }
+
+
+@app.post("/redact-pii")
+async def redact_pii_endpoint(payload: RedactPiiRequest) -> dict[str, Any]:
+    raw_bytes: bytes | None = None
+    try:
+        if payload.content_base64:
+            b64_clean = payload.content_base64.split(",")[-1]
+            raw_bytes = base64.b64decode(b64_clean)
+        elif payload.image_url:
+            raw_bytes = load_image_bytes_in_memory(payload.image_url)
+        elif payload.file_url:
+            raw_bytes = load_image_bytes_in_memory(payload.file_url)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Must supply 'image_url', 'file_url', or 'content_base64'",
+            )
+
+        _, encoded, stats = redact_pii_in_memory(raw_bytes, output_format=".png")
+        if not encoded:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or unreadable image data",
+            )
+
+        b64_output = base64.b64encode(encoded).decode("utf-8")
+        return {
+            "status": "success",
+            "redacted_image_base64": f"data:image/png;base64,{b64_output}",
+            "faces_detected": stats["faces"],
+            "text_blocks_detected": stats["text_blocks"],
+            "total_redactions": stats["total"],
+            "message": "PII masked successfully with solid black boxes. Background preserved.",
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PII Redaction failed: {exc}",
+        )
+    finally:
+        del raw_bytes
+        gc.collect()
 
 
 @app.post("/verify-aadhaar-qr")

@@ -4,12 +4,17 @@ import os
 import re
 from typing import Any
 import requests
+from modules.pii_redactor import redact_pii_in_memory
 
 PRIMARY_MODEL_URL = "https://router.huggingface.co/hf-inference/models/Organika/sdxl-detector"
 FALLBACK_MODEL_URL = "https://router.huggingface.co/hf-inference/models/umm-maybe/AI-image-detector"
 
 
-def detect_ai_generation(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict[str, Any]:
+def detect_ai_generation(
+    image_bytes: bytes,
+    mime_type: str = "image/jpeg",
+    explicit_boxes: list[tuple[int, int, int, int]] | None = None,
+) -> dict[str, Any]:
     token = os.getenv("HF_API_TOKEN")
 
     if not token:
@@ -23,9 +28,17 @@ def detect_ai_generation(image_bytes: bytes, mime_type: str = "image/jpeg") -> d
             "ai_probability": None,
         }
 
+    # Zero-Trust PII Redaction: Mask all citizen identifiers, faces, and text blocks before external dispatch
+    _, sanitized_bytes, redaction_stats = redact_pii_in_memory(
+        image_bytes,
+        explicit_boxes=explicit_boxes,
+        output_format=".jpg",
+    )
+    send_bytes = sanitized_bytes if sanitized_bytes else image_bytes
+
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": mime_type,
+        "Content-Type": "image/jpeg",
     }
 
     response_payload = None
@@ -33,13 +46,13 @@ def detect_ai_generation(image_bytes: bytes, mime_type: str = "image/jpeg") -> d
 
     # Try primary model
     try:
-        res = requests.post(PRIMARY_MODEL_URL, headers=headers, data=image_bytes, timeout=12)
+        res = requests.post(PRIMARY_MODEL_URL, headers=headers, data=send_bytes, timeout=12)
         if res.status_code == 200:
             response_payload = res.json()
         elif res.status_code in (503, 404, 429):
             # Fallback model
             used_model = "umm-maybe/AI-image-detector"
-            fb_res = requests.post(FALLBACK_MODEL_URL, headers=headers, data=image_bytes, timeout=12)
+            fb_res = requests.post(FALLBACK_MODEL_URL, headers=headers, data=send_bytes, timeout=12)
             if fb_res.status_code == 200:
                 response_payload = fb_res.json()
             else:

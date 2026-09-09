@@ -37,8 +37,19 @@ export function createApp() {
         documentType: documentType || "other",
         content: buffer,
       });
+      const referenceCode = `VS-${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
       res.json({
-        ...analysis,
+        id: `scan-${Date.now()}`,
+        referenceCode,
+        status: analysis.status,
+        confidenceScore: analysis.score,
+        score: analysis.score,
+        checks: analysis.checks,
+        extractedFields: analysis.extractedFields,
+        comparisonFindings: analysis.comparisonFindings,
+        providerHealth: analysis.providerHealth,
+        summary: analysis.summary,
+        systemError: analysis.systemError,
         previewUrl: `data:${mimeType || "image/jpeg"};base64,${contentBase64}`,
       });
     } catch (err: any) {

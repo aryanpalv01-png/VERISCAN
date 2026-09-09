@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { getPreviewDocuments } from "@/lib/scanStore";
 import {
+  calculateAggregatedConfidenceScore,
   DocumentStatus,
   DocumentKind,
   formatDate,
@@ -31,23 +32,45 @@ export default function History() {
   const scansQuery = trpc.scans.list.useQuery(undefined, { retry: false, enabled: Boolean(user) });
 
   const documents = useMemo(() => {
-    if (!user) return [];
+    const localDocs = getPreviewDocuments(userIdentifier);
+    let serverDocs: any[] = [];
     if (scansQuery.data && Array.isArray(scansQuery.data) && scansQuery.data.length > 0) {
-      return (scansQuery.data as any[]).map((doc) => ({
-        id: String(doc.id),
-        filename: doc.fileName || "Document",
-        documentType: doc.documentType || "other",
-        type: (doc.documentType as any) || "other",
-        status: (doc.status as any) || "verified",
-        score: doc.confidenceScore ?? 85,
-        uploadedAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
-        reference: doc.sha256Hash ? doc.sha256Hash.slice(0, 16).toUpperCase() : `VS-IN-${doc.id}`,
-        fileSize: `${Math.round((doc.fileSize ?? 102400) / 1024)} KB`,
-        mimeType: doc.mimeType || "application/pdf",
-        checks: [],
-      }));
+      serverDocs = (scansQuery.data as any[]).map((doc) => {
+        const checks = Array.isArray(doc.checks) ? doc.checks : [];
+        const score = checks.length > 0
+          ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore)
+          : (doc.confidenceScore ?? 0);
+
+        return {
+          id: String(doc.id),
+          filename: doc.originalFilename || doc.fileName || doc.filename || "Document",
+          documentType: doc.documentType || "other",
+          type: (doc.documentType as any) || "other",
+          status: (doc.status as any) || "verified",
+          score,
+          uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt).toISOString() : doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+          reference: doc.referenceCode || (doc.sha256Hash ? doc.sha256Hash.slice(0, 16).toUpperCase() : `VS-IN-${doc.id}`),
+          fileSize: typeof doc.fileSize === "number" ? `${Math.max(0.1, doc.fileSize / 1024 / 1024).toFixed(1)} MB` : (doc.fileSize || "1.0 MB"),
+          mimeType: doc.mimeType || "application/pdf",
+          checks,
+          extractedFields: doc.extractedFields,
+          comparisonFindings: doc.comparisonFindings,
+        };
+      });
     }
-    return getPreviewDocuments(userIdentifier);
+
+    if (!user) return localDocs;
+
+    const combined = [...serverDocs];
+    const seenIds = new Set(serverDocs.map((d) => String(d.id)));
+    const seenRefs = new Set(serverDocs.map((d) => String(d.reference)));
+    for (const local of localDocs) {
+      if (!seenIds.has(String(local.id)) && !seenRefs.has(String(local.reference))) {
+        combined.push(local);
+        seenIds.add(String(local.id));
+      }
+    }
+    return combined;
   }, [user, scansQuery.data, userIdentifier]);
 
   const filtered = useMemo(() => {

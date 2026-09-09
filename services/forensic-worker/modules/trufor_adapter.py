@@ -21,8 +21,8 @@ def run_trufor_analysis(image: Image.Image, raw_bytes: bytes = b"") -> dict[str,
             pass
 
     # If checkpoint is not configured, inform the user clearly
-    # But allow test/mock inference when requested for evaluation pipelines
-    allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1")
+    # But allow test/mock inference when requested for evaluation pipelines or demo mode
+    allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1") or os.getenv("DEMO_FALLBACK_MODE", "false").lower() in ("true", "1")
     if not checkpoint_path and not allow_mock:
         return {
             "checkName": "trufor_inference",

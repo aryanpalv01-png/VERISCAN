@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { fileToBase64, writeLocalScan } from "@/lib/scanStore";
-import { analyzeDocumentDirectly, makeDemoDocument } from "@/lib/veriscan";
+import { analyzeDocumentDirectly, formatCheckName, VerificationDocument } from "@/lib/veriscan";
 import {
   ArrowLeft,
   FileImage,
@@ -32,31 +32,21 @@ export default function Verify() {
       setLocation(`/scan/${result.id}`);
     },
     onError: async (error) => {
-      console.warn("tRPC scan creation encountered issue:", error);
+      console.warn("tRPC scan creation fallback to direct forensic analysis:", error);
       if (currentFileRef.current) {
-        let previewUrl: string | undefined;
-        try {
-          const b64 = await fileToBase64(currentFileRef.current);
-          previewUrl = `data:${currentFileRef.current.type || "image/jpeg"};base64,${b64}`;
-        } catch {
-          // ignore
-        }
         try {
           const scan = await analyzeDocumentDirectly(currentFileRef.current);
           writeLocalScan(scan, userIdentifier);
           setLocation(`/scan/${scan.id}`);
           return;
-        } catch {
-          const scan = makeDemoDocument(currentFileRef.current, previewUrl);
-          writeLocalScan(scan, userIdentifier);
-          setLocation(`/scan/${scan.id}`);
-          return;
+        } catch (directErr: any) {
+          console.error("Direct forensic analysis error:", directErr);
+          setUploadError(directErr.message || error.message || "Upload processing error");
+          toast.error("Document analysis error", {
+            description: directErr.message || error.message || "Pipeline execution failed.",
+          });
         }
       }
-      setUploadError(error.message || "Upload processing error");
-      toast.info("Upload notice", {
-        description: error.message || "Document analysis completed with client inspection.",
-      });
     },
   });
 
@@ -84,23 +74,34 @@ export default function Verify() {
           contentBase64,
         },
         {
-          onSuccess: (result) => {
-            writeLocalScan(
-              {
-                id: String(result.id),
-                filename: file.name,
-                type: docType,
-                uploadedAt: new Date().toISOString(),
-                status: result.status,
-                score: result.confidenceScore,
-                fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
-                mimeType: file.type || "image/jpeg",
-                reference: result.referenceCode,
-                previewUrl,
-                checks: [],
-              },
-              userIdentifier
-            );
+          onSuccess: (result: any) => {
+            const checksList = (result.checks || []).map((c: any, index: number) => ({
+              id: String(c.id || index + 1),
+              name: formatCheckName(c.checkName),
+              shortName: formatCheckName(c.checkName),
+              result: c.result,
+              confidence: c.confidence,
+              explanation: c.explanation,
+              flaggedRegion: c.flaggedRegion || c.flagged_region || undefined,
+              provider: c.provider,
+            }));
+            const newDoc: VerificationDocument = {
+              id: String(result.id),
+              filename: file.name,
+              type: docType,
+              uploadedAt: new Date().toISOString(),
+              status: result.status,
+              score: result.confidenceScore,
+              fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
+              mimeType: file.type || "image/jpeg",
+              reference: result.referenceCode,
+              previewUrl,
+              checks: checksList,
+              extractedFields: result.extractedFields,
+              comparisonFindings: result.comparisonFindings,
+              providerHealth: result.providerHealth,
+            };
+            writeLocalScan(newDoc, userIdentifier);
             setLocation(`/scan/${result.id}`);
           },
         }
@@ -110,10 +111,8 @@ export default function Verify() {
         const scan = await analyzeDocumentDirectly(file);
         writeLocalScan(scan, userIdentifier);
         setLocation(`/scan/${scan.id}`);
-      } catch {
-        const scan = makeDemoDocument(file, previewUrl);
-        writeLocalScan(scan, userIdentifier);
-        setLocation(`/scan/${scan.id}`);
+      } catch (directErr: any) {
+        setUploadError(directErr.message || "Failed to process document");
       }
     }
   };

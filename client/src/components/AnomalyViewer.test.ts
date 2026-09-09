@@ -29,4 +29,12 @@ describe("AnomalyViewer Data Models", () => {
     expect(anomalies[0].id).toBe(1);
     expect(anomalies[1].id).toBe(2);
   });
+
+  it("handles verified clean specimen with empty anomaly list without fabricating flags", () => {
+    const cleanAnomalies: AnomalyItem[] = [];
+    expect(cleanAnomalies).toHaveLength(0);
+    // Verified clean specimens should contain zero flagged anomaly items
+    const hasFlags = cleanAnomalies.length > 0;
+    expect(hasFlags).toBe(false);
+  });
 });

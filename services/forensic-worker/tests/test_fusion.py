@@ -106,3 +106,52 @@ def test_fusion_unconfigured_neural_modules_zero_weight():
             assert c["weight"] == 0.0
             assert c["effective_weight"] == 0.0
 
+
+def test_fusion_null_and_missing_data_zero_deduction():
+    # Extreme null/missing checks: 1 pristine verified pass, 8 completely null/missing checks
+    checks = [
+        {"checkName": "checksum_validation", "result": "pass", "confidence": 100},
+        {"checkName": "qr_signature_verification", "result": None, "confidence": None},
+        {"checkName": "ela_compression_analysis", "result": "not_applicable", "confidence": 0},
+        {"checkName": "copy_move_clone_detection", "result": "error", "confidence": None},
+        {"checkName": "metadata_exif_inspection", "result": "unknown", "confidence": None},
+    ]
+
+    report = fuse_scores(checks)
+    # MUST NOT anchor to 50; must maintain pristine verified status (> 90) based on verified executed metric
+    assert report["status"] == "verified"
+    assert report["score"] >= 95
+    assert report["active_modules_count"] == 1
+    assert report["hard_fail"] is False
+
+
+def test_fusion_tier_a_veto_strictly_sub_30():
+    # Deterministic failure must clamp strictly below 30.0
+    checks = [
+        {"checkName": "checksum_validation", "result": "flag", "confidence": 5, "explanation": "Verhoeff check failure"},
+        {"checkName": "ocr_typography_consistency", "result": "pass", "confidence": 99},
+        {"checkName": "ela_compression_analysis", "result": "pass", "confidence": 99},
+        {"checkName": "copy_move_clone_detection", "result": "pass", "confidence": 99},
+    ]
+
+    report = fuse_scores(checks)
+    assert report["hard_fail"] is True
+    assert report["tier_a_veto"] is True
+    assert report["status"] == "likely_forged"
+    assert report["verdict"] == "Likely Forged"
+    assert report["score"] < 30.0
+    assert 15.0 <= report["score"] <= 25.0
+
+
+def test_fusion_pipeline_class_direct_usage():
+    from modules.fusion_engine import VeriScanScoringPipeline
+    pipeline = VeriScanScoringPipeline()
+    checks = [
+        {"checkName": "checksum_validation", "result": "pass", "confidence": 95},
+        {"checkName": "ocr_typography_consistency", "result": "pass", "confidence": 90},
+    ]
+    res = pipeline.evaluate(checks)
+    assert res["status"] == "verified"
+    assert res["score"] >= 90
+
+

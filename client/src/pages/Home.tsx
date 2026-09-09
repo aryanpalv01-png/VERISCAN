@@ -3,7 +3,7 @@ import { DocumentUploadPanel } from "@/components/DocumentUploadPanel";
 import { VeriScanLogo } from "@/components/VeriScanLogo";
 import { GovMasthead } from "@/components/common/GovMasthead";
 import { useI18n } from "@/contexts/I18nContext";
-import { analyzeDocumentDirectly, makeDemoDocument } from "@/lib/veriscan";
+import { analyzeDocumentDirectly, calculateAggregatedConfidenceScore, makeDemoDocument } from "@/lib/veriscan";
 import { fileToBase64, writeLocalScan, readUserScans } from "@/lib/scanStore";
 import { ArrowRight, LockKeyhole, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useLocation, Link } from "wouter";
@@ -86,7 +86,7 @@ export default function Home() {
         ref: scan.reference || scan.id.substring(0, 10).toUpperCase(),
         type: (scan.type || "DOCUMENT").toUpperCase(),
         status: scan.status === "verified" ? t("verified") : scan.status === "needs_review" ? t("needs_review") : t("likely_forged"),
-        score: scan.score ?? 50,
+        score: scan.checks && scan.checks.length > 0 ? calculateAggregatedConfidenceScore(scan.checks, scan.score) : (scan.score ?? 0),
         findings: scan.comparisonFindings?.[0] || scan.checks?.find((c) => c.result === "flag")?.explanation || "Inspection completed",
         tone: scan.status === "verified" ? "verified" : scan.status === "needs_review" ? "review" : "forged",
         href: `/report/${scan.id}`,

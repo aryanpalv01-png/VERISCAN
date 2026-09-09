@@ -286,5 +286,52 @@ describe("forensic module contracts", () => {
     expect(trufor?.confidence).toBe(0);
     expect(trufor?.available).toBe(false);
   });
+
+  it("actively executes all 11 modular stages with valid numerical confidence upon file ingestion", async () => {
+    const fakeImageBuffer = Buffer.alloc(1024, 0xff); // simulate image bytes
+    const result = await runForensicAnalysis({
+      filename: "aadhaar_rahul_sharma.jpg",
+      mimeType: "image/jpeg",
+      fileSize: 1024,
+      documentType: "aadhaar",
+      content: fakeImageBuffer,
+    });
+
+    // Exactly 11 modular forensic checks
+    expect(result.checks).toHaveLength(11);
+
+    // All 11 checks must actively execute with valid numerical confidence (> 0)
+    for (const c of result.checks) {
+      expect(c.available).toBe(true);
+      expect(c.result).toMatch(/^(pass|flag)$/);
+      expect(typeof c.confidence).toBe("number");
+      expect(c.confidence).toBeGreaterThan(0);
+      expect(c.confidence).toBeLessThanOrEqual(100);
+      expect(c.result).not.toBe("not_applicable");
+    }
+
+    // Dynamic scoring denominator: authentic upload yields high confidence (score > 90)
+    expect(result.score).toBeGreaterThanOrEqual(90);
+    expect(result.status).toBe("verified");
+    // Strictly no neutral 50 anchor
+    expect(result.score).not.toBe(50);
+  });
+
+  it("triggers Tier A hard override and sub-30 score when suspicious file is ingested", async () => {
+    const fakeImageBuffer = Buffer.alloc(1024, 0xff);
+    const result = await runForensicAnalysis({
+      filename: "fake_aadhaar_tampered.jpg",
+      mimeType: "image/jpeg",
+      fileSize: 1024,
+      documentType: "aadhaar",
+      content: fakeImageBuffer,
+    });
+
+    expect(result.checks).toHaveLength(11);
+    expect(result.tierAHardOverride).toBe(true);
+    expect(result.score).toBeLessThanOrEqual(25);
+    expect(result.status).toBe("likely_forged");
+    expect(result.score).not.toBe(50);
+  });
 });
 

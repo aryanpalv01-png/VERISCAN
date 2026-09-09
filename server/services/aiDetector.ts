@@ -9,13 +9,14 @@ const HF_FALLBACK_ENDPOINT = "https://api-inference.huggingface.co/models/Organi
 type DecodedImage = { width: number; height: number; data: Uint8ClampedArray };
 
 function decodeImageForRedaction(input: ForensicInput): DecodedImage | null {
+  if (input.decodedImage) return input.decodedImage;
   if (!input.content || !/^image\//.test(input.mimeType)) return null;
   try {
-    if (input.mimeType === "image/jpeg") {
+    if (input.mimeType === "image/jpeg" || (input.content[0] === 0xff && input.content[1] === 0xd8)) {
       const decoded = jpeg.decode(input.content, { useTArray: true });
       return { width: decoded.width, height: decoded.height, data: new Uint8ClampedArray(decoded.data) };
     }
-    if (input.mimeType === "image/png") {
+    if (input.mimeType === "image/png" || (input.content[0] === 0x89 && input.content[1] === 0x50)) {
       const decoded = PNG.sync.read(input.content);
       return { width: decoded.width, height: decoded.height, data: new Uint8ClampedArray(decoded.data) };
     }
@@ -38,7 +39,7 @@ export async function redactPiiForExternalInference(
     return input.content || Buffer.alloc(0);
   }
   const decoded = decodeImageForRedaction(input);
-  if (!decoded) return input.content;
+  if (!decoded) return input.normalizedJpeg || input.content;
 
   // Mask sensitive identity field zones (middle bands where ID numbers, addresses, and names reside)
   const startY = Math.floor(decoded.height * 0.35);
@@ -63,7 +64,7 @@ export async function redactPiiForExternalInference(
     );
     return encoded.data;
   } catch {
-    return input.content;
+    return input.normalizedJpeg || input.content;
   }
 }
 

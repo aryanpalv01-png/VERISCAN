@@ -49,6 +49,7 @@ export type VerificationDocument = {
   unconfiguredModules?: string[];
   dormantNeuralChecks?: string[];
   activeModulesCount?: number;
+  systemError?: string;
 };
 
 export const scanStages = [
@@ -596,8 +597,9 @@ export function formatCheckName(checkName: string) {
     trufor_inference: "TruFor inference adapter",
     catnet_inference: "CAT-Net inference adapter",
     checksum_identifier_validation: "Identifier checksum validation",
+    pixel_worker_analysis: "Pixel worker forensic analysis",
   };
-  return labels[checkName] ?? checkName.replaceAll("_", " ").replace(/\\b\\w/g, (character) => character.toUpperCase());
+  return labels[checkName] ?? checkName.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function isRegion(value: unknown): value is { x: number; y: number; width: number; height: number } {
@@ -606,8 +608,16 @@ function isRegion(value: unknown): value is { x: number; y: number; width: numbe
   return ["x", "y", "width", "height"].every((key) => typeof region[key] === "number");
 }
 
-function isStringRecord(value: unknown): value is Record<string, string> {
-  return Boolean(value && typeof value === "object" && Object.values(value as Record<string, unknown>).every((item) => typeof item === "string"));
+function parseExtractedFields(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length === 0) return undefined;
+  const result: Record<string, string> = {};
+  for (const [k, v] of entries) {
+    if (v === null || v === undefined) continue;
+    result[k] = typeof v === "object" ? JSON.stringify(v) : String(v);
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
 }
 
 function isProviderHealth(value: unknown): value is Record<string, "healthy" | "not_configured" | "not_applicable" | "degraded"> {
@@ -617,31 +627,40 @@ function isProviderHealth(value: unknown): value is Record<string, "healthy" | "
 
 export function serverDocumentToVerification(document: ServerDocumentRecord, checkRows: ServerCheckRecord[] = []): VerificationDocument {
   const status: DocumentStatus = document.status === "processing" ? "needs_review" : document.status;
+  const checks = checkRows.map((check) => ({
+    id: String(check.id),
+    name: formatCheckName(check.checkName),
+    shortName: formatCheckName(check.checkName),
+    result: check.result,
+    confidence: check.confidence,
+    explanation: check.explanation,
+    flaggedRegion: isRegion(check.flaggedRegion) ? check.flaggedRegion : undefined,
+    provider: check.provider ?? undefined,
+    providerState: check.providerState ?? undefined,
+  }));
+
+  const executedCount = checks.filter((c) => c.result === "pass" || c.result === "flag").length;
+  const aggregatedScore = calculateAggregatedConfidenceScore(checks, document.confidenceScore);
+  const score = checkRows.length > 0 && executedCount === 0
+    ? 0
+    : (typeof document.confidenceScore === "number" ? document.confidenceScore : aggregatedScore);
+
   return {
     id: String(document.id),
     filename: document.originalFilename,
     type: document.documentType,
     uploadedAt: new Date(document.uploadedAt).toISOString(),
     status,
-    score: document.confidenceScore,
+    score,
     fileSize: `${Math.max(0.1, document.fileSize / 1024 / 1024).toFixed(1)} MB`,
     mimeType: document.mimeType,
     reference: document.referenceCode,
     previewUrl: document.fileUrl || (document as any).file_url || (document as any).previewUrl || undefined,
     providerHealth: isProviderHealth(document.providerHealth) ? document.providerHealth : undefined,
-    extractedFields: isStringRecord(document.extractedFields) ? document.extractedFields : undefined,
+    extractedFields: parseExtractedFields(document.extractedFields),
     comparisonFindings: Array.isArray(document.comparisonFindings) ? document.comparisonFindings.filter((item): item is string => typeof item === "string") : undefined,
-    checks: checkRows.map((check) => ({
-      id: String(check.id),
-      name: formatCheckName(check.checkName),
-      shortName: formatCheckName(check.checkName),
-      result: check.result,
-      confidence: check.confidence,
-      explanation: check.explanation,
-      flaggedRegion: isRegion(check.flaggedRegion) ? check.flaggedRegion : undefined,
-      provider: check.provider ?? undefined,
-      providerState: check.providerState ?? undefined,
-    })),
+    systemError: (document as any).systemError || (document as any).system_error || (score === 0 && executedCount === 0 && checkRows.length > 0 ? "Pipeline execution failed to parse image buffers." : undefined),
+    checks,
   };
 }
 
@@ -694,6 +713,41 @@ export function getScanStatus(score: number): DocumentStatus {
   return "likely_forged";
 }
 
+/**
+ * Calculates aggregated confidence score across forensic verification checks.
+ *
+ * Requirements:
+ * 1. Modules returning "not_applicable" or "N/A" are excluded from denominator and scoring.
+ * 2. If activeChecks === 0 (all modules return N/A), defaults strictly to 0 instead of a neutral midpoint (50).
+ * 3. When activeChecks > 0, the denominator strictly divides by the count of successfully executed modules.
+ */
+export function calculateAggregatedConfidenceScore(
+  checks?: Array<{ result?: string; confidence?: number | null }> | null,
+  fallbackScore?: number | null
+): number {
+  if (!checks || !Array.isArray(checks) || checks.length === 0) {
+    return typeof fallbackScore === "number" && !isNaN(fallbackScore) ? fallbackScore : 0;
+  }
+
+  const executedModules = checks.filter(
+    (c) =>
+      c &&
+      c.result !== "not_applicable" &&
+      c.result !== "N/A" &&
+      typeof c.confidence === "number" &&
+      !isNaN(c.confidence)
+  );
+
+  const activeChecks = executedModules.length;
+
+  if (activeChecks === 0) {
+    return 0;
+  }
+
+  const totalConfidence = executedModules.reduce((sum, c) => sum + (c.confidence ?? 0), 0);
+  return Math.round(totalConfidence / activeChecks);
+}
+
 export function getInitials(name?: string | null) {
   if (!name) return "VS";
   const parts = name.trim().split(/\s+/).slice(0, 2);
@@ -706,27 +760,337 @@ export function makeDemoDocument(file: File, previewUrl?: string): VerificationD
   const isSuspicious = /(fake|forged|forgery|tamper|sample|specimen|dummy|photoshop|canva|invalid|fail|spliced)/i.test(name);
   const isReview = /(salary|statement|review|edit|modified)/i.test(name);
 
-  let score = 92;
+  let score = 96;
   let status: DocumentStatus = "verified";
-  let checks = demoDocuments[0].checks;
+  let checks: VerificationCheck[] = [];
 
   if (isSuspicious) {
-    score = 24;
+    score = 18;
     status = "likely_forged";
-    checks = demoDocuments[2].checks.map((c) => ({
-      ...c,
-      explanation: c.explanation.replace("marksheet", file.name),
-    }));
+    checks = [
+      {
+        id: "metadata_exif_inspection",
+        name: "Metadata / EXIF inspection",
+        shortName: "Metadata inspection",
+        result: "flag",
+        confidence: 18,
+        explanation: "Image metadata contains editing software markers (Photoshop/Canva/GIMP). Manual review required.",
+        provider: "local",
+        flaggedRegion: { x: 15, y: 15, width: 70, height: 20 },
+      },
+      {
+        id: "checksum_identifier_validation",
+        name: "Identifier checksum validation",
+        shortName: "Identifier checksum",
+        result: "flag",
+        confidence: 8,
+        explanation: "The extracted Aadhaar identifier fails the Verhoeff checksum algorithm. High probability of fraudulent issuance.",
+        provider: "local",
+        flaggedRegion: { x: 25, y: 55, width: 50, height: 12 },
+      },
+      {
+        id: "qr_signature_verification",
+        name: "QR signature verification",
+        shortName: "QR signature",
+        result: "flag",
+        confidence: 10,
+        explanation: "Cryptographic signature digest mismatch: embedded public key signature does not match demographics.",
+        provider: "local",
+      },
+      {
+        id: "ela_compression_analysis",
+        name: "Error level analysis",
+        shortName: "Error level analysis",
+        result: "flag",
+        confidence: 22,
+        explanation: "JPEG re-save ELA measured high local compression discrepancies indicating potential localized splicing.",
+        provider: "local",
+        flaggedRegion: { x: 18, y: 30, width: 64, height: 32 },
+      },
+      {
+        id: "copy_move_clone_detection",
+        name: "Copy-move / clone detection",
+        shortName: "Clone detection",
+        result: "flag",
+        confidence: 20,
+        explanation: "Repeated 8×8 luminance blocks were identified across non-adjacent image coordinates, indicating clone-stamp tampering.",
+        provider: "local",
+        flaggedRegion: { x: 40, y: 35, width: 25, height: 20 },
+      },
+      {
+        id: "screenshot_capture_detection",
+        name: "Screenshot / capture-type detection",
+        shortName: "Capture detection",
+        result: "flag",
+        confidence: 28,
+        explanation: "Decoded pixel noise statistics and zero sensor noise indicate re-rendered screen capture rather than physical scan/photo.",
+        provider: "local",
+      },
+      {
+        id: "ocr_typography_consistency",
+        name: "OCR typography consistency",
+        shortName: "OCR typography",
+        result: "flag",
+        confidence: 22,
+        explanation: "Optical character inspection identified anomalous baseline jitter and uneven kerning in the identity text zone.",
+        provider: "ocr",
+        flaggedRegion: { x: 25, y: 40, width: 50, height: 18 },
+      },
+      {
+        id: "ai_generated_image_detector",
+        name: "AI-generated image detector",
+        shortName: "AI detector",
+        result: "flag",
+        confidence: 18,
+        explanation: "Neural feature analysis detected latent diffusion artifacts and synthetic noise distribution (AI probability: 86%).",
+        provider: "huggingface",
+      },
+      {
+        id: "trufor_inference",
+        name: "TruFor inference adapter",
+        shortName: "TruFor inference",
+        result: "flag",
+        confidence: 19,
+        explanation: "TruFor RGB+Noiseprint dense feature map highlighted high-probability forensic tampering anomalies.",
+        provider: "trufor",
+        flaggedRegion: { x: 30, y: 45, width: 40, height: 25 },
+      },
+      {
+        id: "catnet_inference",
+        name: "CAT-Net inference adapter",
+        shortName: "CAT-Net inference",
+        result: "flag",
+        confidence: 19,
+        explanation: "CAT-Net DCT domain analysis identified non-standard quantization tables and localized frequency anomalies.",
+        provider: "catnet",
+      },
+      {
+        id: "pixel_worker_analysis",
+        name: "Pixel worker forensic analysis",
+        shortName: "Pixel worker",
+        result: "flag",
+        confidence: 19,
+        explanation: "Pixel worker subpixel raster analysis identified discrete resampling boundaries and localized luminance shifts.",
+        provider: "pixel",
+      },
+    ];
   } else if (isReview) {
-    score = 66;
+    score = 72;
     status = "needs_review";
-    checks = demoDocuments[1].checks;
+    checks = [
+      {
+        id: "metadata_exif_inspection",
+        name: "Metadata / EXIF inspection",
+        shortName: "Metadata inspection",
+        result: "pass",
+        confidence: 92,
+        explanation: "Standard JFIF/PNG container verified; no third-party editor provenance markers detected.",
+        provider: "local",
+      },
+      {
+        id: "checksum_identifier_validation",
+        name: "Identifier checksum validation",
+        shortName: "Identifier checksum",
+        result: "pass",
+        confidence: 98,
+        explanation: "The extracted identifier passes statutory checksum algorithm.",
+        provider: "local",
+      },
+      {
+        id: "qr_signature_verification",
+        name: "QR signature verification",
+        shortName: "QR signature",
+        result: "pass",
+        confidence: 96,
+        explanation: "UIDAI 2048-bit RSA asymmetric digital signature verified authentic against institutional certificate trust chain.",
+        provider: "local",
+      },
+      {
+        id: "ela_compression_analysis",
+        name: "Error level analysis",
+        shortName: "Error level analysis",
+        result: "flag",
+        confidence: 58,
+        explanation: "JPEG re-save ELA measured minor compression gradient discrepancy around date/amount fields.",
+        provider: "local",
+        flaggedRegion: { x: 50, y: 35, width: 35, height: 15 },
+      },
+      {
+        id: "copy_move_clone_detection",
+        name: "Copy-move / clone detection",
+        shortName: "Clone detection",
+        result: "pass",
+        confidence: 94,
+        explanation: "No duplicate luminance patterns or clone-stamp repetitions detected in pixel blocks.",
+        provider: "local",
+      },
+      {
+        id: "screenshot_capture_detection",
+        name: "Screenshot / capture-type detection",
+        shortName: "Capture detection",
+        result: "pass",
+        confidence: 88,
+        explanation: "Natural optical scan noise profile detected.",
+        provider: "local",
+      },
+      {
+        id: "ocr_typography_consistency",
+        name: "OCR typography consistency",
+        shortName: "OCR typography",
+        result: "pass",
+        confidence: 86,
+        explanation: "Typography broadly consistent with minor baseline deviation.",
+        provider: "ocr",
+      },
+      {
+        id: "ai_generated_image_detector",
+        name: "AI-generated image detector",
+        shortName: "AI detector",
+        result: "pass",
+        confidence: 94,
+        explanation: "Organic photographic camera profile; AI generation probability < 5%.",
+        provider: "huggingface",
+      },
+      {
+        id: "trufor_inference",
+        name: "TruFor inference adapter",
+        shortName: "TruFor inference",
+        result: "pass",
+        confidence: 91,
+        explanation: "TruFor RGB noise consistency verified.",
+        provider: "trufor",
+      },
+      {
+        id: "catnet_inference",
+        name: "CAT-Net inference adapter",
+        shortName: "CAT-Net inference",
+        result: "pass",
+        confidence: 90,
+        explanation: "Uniform DCT quantization frequency grid verified.",
+        provider: "catnet",
+      },
+      {
+        id: "pixel_worker_analysis",
+        name: "Pixel worker forensic analysis",
+        shortName: "Pixel worker",
+        result: "pass",
+        confidence: 92,
+        explanation: "Continuous pixel gradient and resampling fidelity verified.",
+        provider: "pixel",
+      },
+    ];
+  } else {
+    score = 96;
+    status = "verified";
+    checks = [
+      {
+        id: "metadata_exif_inspection",
+        name: "Metadata / EXIF inspection",
+        shortName: "Metadata inspection",
+        result: "pass",
+        confidence: 95,
+        explanation: "EXIF/XMP metadata parsed clean; no editing markers detected. Metadata verified authentic.",
+        provider: "local",
+      },
+      {
+        id: "checksum_identifier_validation",
+        name: "Identifier checksum validation",
+        shortName: "Identifier checksum",
+        result: "pass",
+        confidence: 99,
+        explanation: "The extracted 12-digit identifier passes the Verhoeff dihedral permutation checksum algorithm.",
+        provider: "local",
+      },
+      {
+        id: "qr_signature_verification",
+        name: "QR signature verification",
+        shortName: "QR signature",
+        result: "pass",
+        confidence: 98,
+        explanation: "UIDAI 2048-bit RSA digital signature verified authentic against institutional certificate trust chain.",
+        provider: "local",
+      },
+      {
+        id: "ela_compression_analysis",
+        name: "Error level analysis",
+        shortName: "Error level analysis",
+        result: "pass",
+        confidence: 94,
+        explanation: "JPEG re-save ELA measured uniform error levels confirming authentic compression consistency across blocks.",
+        provider: "local",
+      },
+      {
+        id: "copy_move_clone_detection",
+        name: "Copy-move / clone detection",
+        shortName: "Clone detection",
+        result: "pass",
+        confidence: 96,
+        explanation: "No duplicate luminance patterns or clone-stamp repetitions detected in pixel blocks.",
+        provider: "local",
+      },
+      {
+        id: "screenshot_capture_detection",
+        name: "Screenshot / capture-type detection",
+        shortName: "Capture detection",
+        result: "pass",
+        confidence: 92,
+        explanation: "Natural sensor noise and gradient fidelity indicate direct camera capture or high-grade optical scan.",
+        provider: "local",
+      },
+      {
+        id: "ocr_typography_consistency",
+        name: "OCR typography consistency",
+        shortName: "OCR typography",
+        result: "pass",
+        confidence: 95,
+        explanation: "Optical character inspection verified consistent typography, font baselines, and character kerning.",
+        provider: "ocr",
+      },
+      {
+        id: "ai_generated_image_detector",
+        name: "AI-generated image detector",
+        shortName: "AI detector",
+        result: "pass",
+        confidence: 96,
+        explanation: "Organic photographic sensor profile verified; synthetic generation probability < 3%.",
+        provider: "huggingface",
+      },
+      {
+        id: "trufor_inference",
+        name: "TruFor inference adapter",
+        shortName: "TruFor inference",
+        result: "pass",
+        confidence: 94,
+        explanation: "TruFor dense feature map verified authentic sensor noise across all spatial regions.",
+        provider: "trufor",
+      },
+      {
+        id: "catnet_inference",
+        name: "CAT-Net inference adapter",
+        shortName: "CAT-Net inference",
+        result: "pass",
+        confidence: 93,
+        explanation: "CAT-Net DCT frequency grid confirms uniform single-pass compression quantization.",
+        provider: "catnet",
+      },
+      {
+        id: "pixel_worker_analysis",
+        name: "Pixel worker forensic analysis",
+        shortName: "Pixel worker",
+        result: "pass",
+        confidence: 95,
+        explanation: "Pixel worker subpixel analysis confirmed continuous spatial gradients and sensor noise uniformity.",
+        provider: "pixel",
+      },
+    ];
   }
+
+  const docType: DocumentKind = name.includes("aadhaar") ? "aadhaar" : name.includes("pan") ? "pan" : name.includes("passport") ? "passport" : "other";
 
   return {
     id,
     filename: file.name,
-    type: name.includes("aadhaar") ? "aadhaar" : name.includes("pan") ? "pan" : name.includes("passport") ? "passport" : "other",
+    type: docType,
     uploadedAt: new Date().toISOString(),
     status,
     score,
@@ -734,6 +1098,23 @@ export function makeDemoDocument(file: File, previewUrl?: string): VerificationD
     mimeType: file.type || "application/octet-stream",
     reference: `VS-${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
     previewUrl,
+    providerHealth: {
+      local: "healthy",
+      ocr: "healthy",
+      pixel: "healthy",
+      huggingface: "healthy",
+      trufor: "healthy",
+      catnet: "healthy",
+    },
+    extractedFields: docType === "pan"
+      ? { pan_number: isSuspicious ? "ABCDE12349" : "ABCDE1234F", name: "SAMPLE CITIZEN" }
+      : { aadhaar_number: isSuspicious ? "219345678901" : "219345678905", name: "SAMPLE CITIZEN" },
+    comparisonFindings: isSuspicious
+      ? [
+          "checksum_identifier_validation: The extracted Aadhaar identifier fails the Verhoeff checksum algorithm.",
+          "qr_signature_verification: Cryptographic signature digest mismatch: embedded public key signature does not match demographics.",
+        ]
+      : undefined,
     checks,
   };
 }

@@ -83,3 +83,16 @@ def test_webhook_supabase_ignored_when_no_url():
     response = client.post("/webhook/supabase", json=payload)
     assert response.status_code == 200
     assert response.json()["status"] == "ignored"
+
+
+def test_redact_pii_endpoint():
+    img_bytes = get_test_image_bytes()
+    import base64
+    b64_str = f"data:image/jpeg;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
+    response = client.post("/redact-pii", json={"content_base64": b64_str})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert "redacted_image_base64" in data
+    assert data["total_redactions"] >= 1
+

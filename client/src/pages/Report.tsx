@@ -31,6 +31,8 @@ import {
   AlertTriangle,
   HelpCircle,
   Hash,
+  Fingerprint,
+  Loader2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
@@ -59,25 +61,35 @@ export default function Report() {
       }),
   });
 
+  const localDoc = useMemo(() => getPreviewDocument(params?.id, userIdentifier), [params?.id, userIdentifier]);
+
   const document = useMemo<VerificationDocument>(() => {
     if (serverQuery.data) {
       const doc = serverDocumentToVerification(
         serverQuery.data.document,
         serverQuery.data.checks
       );
-      if (!doc.previewUrl) {
-        const local = getPreviewDocument(params?.id, userIdentifier);
-        if (local?.previewUrl) {
-          doc.previewUrl = local.previewUrl;
-        }
+      if (!doc.previewUrl && localDoc?.previewUrl) {
+        doc.previewUrl = localDoc.previewUrl;
       }
       return doc;
     }
+
+    if (localDoc) {
+      return localDoc;
+    }
+
+    // If param is not an explicit demo id, check latest scan
+    if (params?.id && !params.id.startsWith("doc-")) {
+      const latest = getPreviewDocument("latest");
+      if (latest && (String(latest.id) === String(params.id) || !params.id.startsWith("doc-"))) return latest;
+    }
+
     return (
-      getPreviewDocument(params?.id, userIdentifier) ??
+      getPreviewDocument(params?.id) ??
       getPreviewDocument("doc-verified-001")!
     );
-  }, [serverQuery.data, params?.id, userIdentifier]);
+  }, [serverQuery.data, localDoc, params?.id]);
 
   const [reviewRequested, setReviewRequested] = useState(false);
   const [showPdfModal, setShowPdfModal] = useState(false);
@@ -90,36 +102,21 @@ export default function Report() {
     const list: AnomalyItem[] = [];
     document.checks.forEach((c, idx) => {
       if (c.result === "flag" || c.flaggedRegion) {
+        const region = c.flaggedRegion;
+        const x = region?.x ?? (region as any)?.x_pct ?? (20 + (idx * 22) % 55);
+        const y = region?.y ?? (region as any)?.y_pct ?? (32 + (idx * 16) % 45);
+        const width = region?.width ?? (region as any)?.width_pct ?? 26;
+        const height = region?.height ?? (region as any)?.height_pct ?? 7;
         list.push({
           id: idx + 1,
-          x_pct: (c.flaggedRegion as any)?.x_pct ?? (20 + (idx * 22) % 55),
-          y_pct: (c.flaggedRegion as any)?.y_pct ?? (32 + (idx * 16) % 45),
-          width_pct: (c.flaggedRegion as any)?.width_pct ?? 26,
-          height_pct: (c.flaggedRegion as any)?.height_pct ?? 7,
+          x_pct: x,
+          y_pct: y,
+          width_pct: width,
+          height_pct: height,
           reason: c.explanation || c.name || "Tampering anomaly flagged",
         });
       }
     });
-    if (list.length === 0) {
-      list.push(
-        {
-          id: 1,
-          x_pct: 18,
-          y_pct: 32,
-          width_pct: 28,
-          height_pct: 7,
-          reason: "Font thickness mismatch in Name/Header block",
-        },
-        {
-          id: 2,
-          x_pct: 22,
-          y_pct: 44,
-          width_pct: 22,
-          height_pct: 6,
-          reason: "Digital copy-paste splicing artifact detected around Date of Birth",
-        }
-      );
-    }
     return list;
   }, [document.checks]);
 
@@ -168,6 +165,17 @@ export default function Report() {
       return isNeuralOrExternal && isDormant;
     });
   }, [document.checks, document.providerHealth]);
+
+  if (canLoadServer && serverQuery.isLoading && !localDoc) {
+    return (
+      <div className="mx-auto max-w-[1440px] min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-[#FF9933]" />
+        <p className="font-mono text-xs uppercase tracking-widest text-[#D1CEC7]">
+          Compiling Forensic Evidence Ledger #{params?.id}...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-4 py-3 sm:py-4 px-2 sm:px-4">
@@ -220,6 +228,28 @@ export default function Report() {
             currentStageIndex={8}
             documentScore={document.score}
           />
+        </div>
+      )}
+
+      {/* System Error: Pipeline Execution Failed to Parse Image Buffers */}
+      {(document.systemError || (document.score === 0 && passed.length + flagged.length === 0)) && (
+        <div className="border border-rose-500/70 bg-rose-950/40 p-4 font-mono text-xs text-rose-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="space-y-1.5 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-rose-100 text-xs uppercase tracking-normal flex items-center gap-2">
+                  System Error: {document.systemError || "Pipeline execution failed to parse image buffers."}
+                  <span className="command-badge bg-rose-500/20 text-rose-300 border-rose-500/50 text-[9px] font-bold">
+                    ACTIVE CHECKS: 0
+                  </span>
+                </span>
+              </div>
+              <p className="text-[11.5px] text-rose-200 leading-relaxed font-sans">
+                {document.systemError || "Pipeline execution failed to parse image buffers."} None of the active forensic verification modules were able to decode raster pixels or parse metadata from the submitted payload.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -346,6 +376,79 @@ export default function Report() {
           </div>
         </div>
       </div>
+
+      {/* Extracted Citizen Demographics & Identity Matrix Panel */}
+      {document.extractedFields && Object.keys(document.extractedFields).length > 0 && (
+        <div className="terminal-panel p-4 sm:p-5 border border-[#3A3D45] bg-[#1C1E22]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3A3D45]/70 pb-2.5">
+            <div className="flex items-center gap-2">
+              <Fingerprint className="h-4 w-4 text-[#FF9933]" />
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
+                Extracted Citizen Demographics & Identity Matrix
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="command-badge bg-[#138808]/15 text-[#138808] border-[#138808]/30 text-[10px] font-bold">
+                RapidOCR / Tesseract Neural Ingestion
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+            {document.extractedFields.name && (
+              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Citizen Name</span>
+                <p className="font-bold text-white text-sm mt-0.5 truncate">{document.extractedFields.name}</p>
+              </div>
+            )}
+            {document.extractedFields.aadhaar_number && (
+              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Aadhaar UID</span>
+                <p className="font-bold text-[#FF9933] text-sm mt-0.5 tracking-wider">{document.extractedFields.aadhaar_number}</p>
+              </div>
+            )}
+            {document.extractedFields.pan_number && (
+              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">PAN Number</span>
+                <p className="font-bold text-[#FF9933] text-sm mt-0.5 tracking-wider">{document.extractedFields.pan_number}</p>
+              </div>
+            )}
+            {document.extractedFields.dob && (
+              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Date of Birth</span>
+                <p className="font-bold text-white text-sm mt-0.5">{document.extractedFields.dob}</p>
+              </div>
+            )}
+            {document.extractedFields.gender && (
+              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gender</span>
+                <p className="font-bold text-white text-sm mt-0.5">{document.extractedFields.gender}</p>
+              </div>
+            )}
+            {Object.entries(document.extractedFields)
+              .filter(([k]) => !["name", "aadhaar_number", "pan_number", "dob", "gender", "raw_text"].includes(k))
+              .map(([k, v]) => (
+                <div key={k} className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">{k.replace(/_/g, " ")}</span>
+                  <p className="font-bold text-white text-xs mt-0.5 truncate">{v}</p>
+                </div>
+              ))}
+          </div>
+
+          {document.comparisonFindings && document.comparisonFindings.length > 0 && (
+            <div className="mt-3 p-2.5 rounded border border-rose-500/40 bg-rose-950/20 text-xs font-mono">
+              <span className="text-rose-400 font-bold block mb-1 text-[11px] uppercase tracking-wider">
+                Cross-Verification Discrepancies:
+              </span>
+              <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
+                {document.comparisonFindings.map((finding, idx) => (
+                  <li key={idx}>{finding}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Split Dual-Pane Command Center Layout (50% Loupe / 50% Compliance Table) */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 items-start">

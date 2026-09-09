@@ -141,7 +141,17 @@ export const appRouter = router({
         await storageDelete(storage.key).catch(() => {});
       }
 
-      return { id: created.id, referenceCode, status: analysis.status, confidenceScore: analysis.score };
+      return {
+        id: created.id,
+        referenceCode,
+        status: analysis.status,
+        confidenceScore: analysis.score,
+        checks: analysis.checks,
+        extractedFields: analysis.extractedFields,
+        comparisonFindings: analysis.comparisonFindings,
+        providerHealth: analysis.providerHealth,
+        summary: analysis.summary,
+      };
     }),
     requestReview: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => requestDocumentReview(input.id, ctx.user.id)),
   }),

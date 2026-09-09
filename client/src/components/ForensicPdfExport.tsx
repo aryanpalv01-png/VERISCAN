@@ -239,6 +239,62 @@ export function ForensicPdfExport({
             </div>
           </div>
 
+          {/* Extracted Citizen Demographics Block */}
+          {document.extractedFields && Object.keys(document.extractedFields).length > 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 print:p-4 shadow-xs print-avoid-break">
+              <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    Extracted Citizen Identity & Demographic Data
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold uppercase">
+                  OCR Engine: RapidOCR
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                {document.extractedFields.name && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Citizen Name</span>
+                    <span className="font-bold text-slate-900 text-sm">{document.extractedFields.name}</span>
+                  </div>
+                )}
+                {document.extractedFields.aadhaar_number && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Aadhaar UID</span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">{document.extractedFields.aadhaar_number}</span>
+                  </div>
+                )}
+                {document.extractedFields.pan_number && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">PAN Number</span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">{document.extractedFields.pan_number}</span>
+                  </div>
+                )}
+                {document.extractedFields.dob && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Date of Birth</span>
+                    <span className="font-semibold text-slate-900">{document.extractedFields.dob}</span>
+                  </div>
+                )}
+                {document.extractedFields.gender && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Gender</span>
+                    <span className="font-semibold text-slate-900">{document.extractedFields.gender}</span>
+                  </div>
+                )}
+                {Object.entries(document.extractedFields)
+                  .filter(([k]) => !["name", "aadhaar_number", "pan_number", "dob", "gender", "raw_text"].includes(k))
+                  .map(([k, v]) => (
+                    <div key={k}>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{k.replace(/_/g, " ")}</span>
+                      <span className="font-semibold text-slate-900 truncate block">{v}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Actual Screened Document Image with Overlays */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 print:p-4 shadow-xs print-avoid-break">
             <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2.5">

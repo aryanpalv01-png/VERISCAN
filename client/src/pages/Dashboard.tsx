@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { fileToBase64, readLocalScans, writeLocalScan } from "@/lib/scanStore";
 import {
   analyzeDocumentDirectly,
+  calculateAggregatedConfidenceScore,
   formatDate,
   formatDocumentType,
   makeDemoDocument,
@@ -76,19 +77,26 @@ export default function Dashboard() {
 
   const serverDocuments = useMemo(() => {
     if (!scansQuery.data || !Array.isArray(scansQuery.data)) return [];
-    return (scansQuery.data as any[]).map((doc) => ({
-      id: String(doc.id),
-      filename: doc.fileName || "Document",
-      documentType: doc.documentType || "other",
-      type: (doc.documentType as any) || "other",
-      status: (doc.status as any) || "verified",
-      score: doc.confidenceScore ?? 85,
-      uploadedAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
-      reference: doc.sha256Hash ? doc.sha256Hash.slice(0, 16).toUpperCase() : `VS-IN-${doc.id}`,
-      fileSize: `${Math.round((doc.fileSize ?? 102400) / 1024)} KB`,
-      mimeType: doc.mimeType || "application/pdf",
-      checks: [],
-    }));
+    return (scansQuery.data as any[]).map((doc) => {
+      const checks = Array.isArray(doc.checks) ? doc.checks : [];
+      const score = checks.length > 0
+        ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore)
+        : (doc.confidenceScore ?? 0);
+
+      return {
+        id: String(doc.id),
+        filename: doc.fileName || "Document",
+        documentType: doc.documentType || "other",
+        type: (doc.documentType as any) || "other",
+        status: (doc.status as any) || "verified",
+        score,
+        uploadedAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+        reference: doc.sha256Hash ? doc.sha256Hash.slice(0, 16).toUpperCase() : `VS-IN-${doc.id}`,
+        fileSize: `${Math.round((doc.fileSize ?? 102400) / 1024)} KB`,
+        mimeType: doc.mimeType || "application/pdf",
+        checks,
+      };
+    });
   }, [scansQuery.data]);
 
   const allDocuments: VerificationDocument[] = serverDocuments.length > 0 ? serverDocuments : localScans;
@@ -133,7 +141,7 @@ export default function Dashboard() {
                 type: docType as any,
                 uploadedAt: new Date().toISOString(),
                 status: result.status,
-                score: result.confidenceScore,
+                score: result.confidenceScore ?? 0,
                 fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
                 mimeType: file.type || "image/jpeg",
                 reference: result.referenceCode,

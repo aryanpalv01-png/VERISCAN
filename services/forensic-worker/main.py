@@ -782,9 +782,16 @@ def run_lightweight_pipeline(file_bytes: bytes, explicit_doc_type: str | None = 
         # 1. EXIF Metadata Inspection
         meta_safe, software = check_exif(file_bytes)
 
-        # 2. Decode Image for OpenCV directly from memory buffer
+        # 2. Decode Image for OpenCV directly from memory buffer (with Pillow fallback for WebP/uncommon formats)
         nparr = np.frombuffer(file_bytes, np.uint8)
         img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img_bgr is None:
+            try:
+                pil_img = Image.open(BytesIO(file_bytes)).convert("RGB")
+                img_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            except Exception:
+                img_bgr = None
 
         if img_bgr is None:
             return error_response("Invalid or corrupted image format")
@@ -909,6 +916,13 @@ async def redact_pii(
 
         nparr = np.frombuffer(raw_bytes, np.uint8)
         img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img_bgr is None or img_bgr.size == 0:
+            try:
+                pil_img = Image.open(BytesIO(raw_bytes)).convert("RGB")
+                img_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            except Exception:
+                img_bgr = None
+
         if img_bgr is None or img_bgr.size == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

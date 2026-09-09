@@ -20,6 +20,8 @@ export interface FusionResult {
   unconfiguredModules: string[];
   dormantNeuralChecks: string[];
   activeModulesCount: number;
+  systemError?: string;
+  summary?: string;
 }
 
 const MODULE_WEIGHTS: Record<string, number> = {
@@ -33,6 +35,7 @@ const MODULE_WEIGHTS: Record<string, number> = {
   ela_compression_analysis: 1.0,
   ai_generated_image_detector: 1.0,
   metadata_exif_inspection: 1.0,
+  pixel_worker_analysis: 1.0,
 };
 
 /**
@@ -50,7 +53,7 @@ export const DETERMINISTIC_TIER_A_CHECKS = new Set([
 
 /**
  * Visual & Heuristic (Tier B) Checks:
- * Secondary indicators (typography, ELA resaving, screenshot capture, clone localization, TruFor/CAT-Net).
+ * Secondary indicators (typography, ELA resaving, screenshot capture, clone localization, TruFor/CAT-Net, pixel).
  * These modules are cumulative:
  * - A single heuristic flag lowers the score moderately.
  * - 2 or more failing simultaneously triggers a "Likely Forged" verdict (<40).
@@ -63,6 +66,7 @@ export const HEURISTIC_CHECKS = new Set([
   "trufor_inference",
   "catnet_inference",
   "ai_generated_image_detector",
+  "pixel_worker_analysis",
 ]);
 
 /**
@@ -74,10 +78,14 @@ export function isModuleOfflineOrUninitialized(c: any): boolean {
   if (!c) return true;
   if (c.result === "not_applicable" || c.available === false) return true;
   if (c.result === "error") return true;
-  if (c.providerState === "not_configured" || c.provider === "not_configured") return true;
   if (c.confidence === null || c.confidence === undefined || Number.isNaN(Number(c.confidence))) return true;
   if (c.status === 503 || c.status === 501 || c.statusCode === 503 || c.statusCode === 501) return true;
   if (c.error || c.uninitialized || c.missingWeights || c.offline || c.notConfigured) return true;
+
+  // An active check with positive confidence and available flag is executed
+  if (c.available === true && typeof c.confidence === "number" && c.confidence > 0) {
+    return false;
+  }
 
   const expl = typeof c.explanation === "string" ? c.explanation.toLowerCase() : "";
   const isOfflineMention =
@@ -168,24 +176,9 @@ export function isTierAFailure(c: ForensicModuleResult): boolean {
 /**
  * VeriScan Institutional Score Fusion Engine:
  * Implements a robust Penalty-Subtraction Model starting from a base score of 100.
- *
- * Architecture:
- * 1. Base Score of 100: All documents start at 100. Points are deducted cumulatively
- *    based on module failures rather than averaging uninitialized or fallback values.
- * 2. Hard Tier A Overrides: If a strict deterministic check (Checksum/Verhoeff or QR signature)
- *    fails, or if a high-confidence clone/tamper localization is flagged, forcibly override
- *    the final score to a hard ceiling between 15 and 25 ("Likely Forged").
- * 3. Scale Tier B Penalties: Apply clear, substantial point deductions for visual/typography
- *    anomalies (-25 to -40 points each) so that flawed documents drop sharply below 40,
- *    while pristine genuine documents retain their 85+ scores.
- * 4. Ignore Offline Modules: Any uninitialized or offline modules (e.g. missing GPU model checkpoints)
- *    return not_applicable with zero weight/deduction and NEVER inject neutral fallback scores like 50.
  */
 export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult {
   // 0. Handle Offline/Uninitialized Models:
-  // If forensic modules return errors, 503, 501, or null values due to missing local weights or API keys,
-  // explicitly assign them a status of "not_applicable" with zero weight (weight = 0.0) and zero penalty.
-  // They are completely excluded from the weighted denominator and NEVER inject neutral scores (50 or 70).
   const unconfiguredModules: string[] = [];
   const dormantNeuralChecks: string[] = [];
 
@@ -216,17 +209,18 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
   const active = checks.filter((item) => item.result !== "not_applicable");
   if (!active.length) {
     return {
-      score: 50,
-      status: "needs_review",
+      score: 0,
+      status: "likely_forged",
       tierAHardOverride: false,
       tierBCumulativePenalty: false,
       tierAFailures: [],
       tierBFailures: [],
-      rawScore: 50,
-      penaltiesApplied: 0,
+      rawScore: 0,
+      penaltiesApplied: 100,
       unconfiguredModules,
       dormantNeuralChecks,
       activeModulesCount: 0,
+      systemError: "Pipeline execution failed to parse image buffers.",
     };
   }
 
@@ -345,6 +339,13 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
   const status: FusionVerdict =
     score > 80 ? "verified" : score >= 40 ? "needs_review" : "likely_forged";
 
+  const flaggedCount = tierAFailures.length + tierBFailures.length;
+  const summary = isTierAFailed
+    ? `Likely Forged (Score: ${score}/100). Critical failure in mathematical/integrity verification (${tierAFailures.join(", ")}).`
+    : flaggedCount > 0
+    ? `${status === "verified" ? "Verified" : status === "needs_review" ? "Needs Review" : "Likely Forged"} (Score: ${score}/100). ${flaggedCount} forensic check(s) flagged anomalies.`
+    : `Verified (Score: ${score}/100). All active forensic checks passed without anomaly.`;
+
   return {
     score,
     status,
@@ -357,5 +358,6 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
     unconfiguredModules,
     dormantNeuralChecks,
     activeModulesCount: active.length,
+    summary,
   };
 }

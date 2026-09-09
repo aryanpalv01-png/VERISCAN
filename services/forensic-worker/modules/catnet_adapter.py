@@ -18,7 +18,7 @@ def run_catnet_analysis(image: Image.Image, raw_bytes: bytes = b"") -> dict[str,
         except Exception:
             pass
 
-    allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1")
+    allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1") or os.getenv("DEMO_FALLBACK_MODE", "false").lower() in ("true", "1")
     if not checkpoint_path and not allow_mock:
         return {
             "checkName": "catnet_inference",

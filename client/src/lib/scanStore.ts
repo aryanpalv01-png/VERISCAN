@@ -51,6 +51,12 @@ export function writeUserScan(document: VerificationDocument, userIdentifier?: s
   const current = readUserScans(userIdentifier);
   const next = [document, ...current.filter((item) => item.id !== document.id)].slice(0, 50);
   window.localStorage.setItem(key, JSON.stringify(next));
+
+  // Direct document key and global latest scan pointer
+  try {
+    window.localStorage.setItem(`veriscan-doc-${document.id}`, JSON.stringify(document));
+    window.localStorage.setItem("veriscan-latest-scan", JSON.stringify(document));
+  } catch {}
 }
 
 // Aliases for backward compatibility
@@ -87,28 +93,57 @@ export function fileToBase64(file: File) {
 export function getPreviewDocument(id?: string, userIdentifier?: string): VerificationDocument | undefined {
   if (!id) return undefined;
 
-  // 1. Search current user's scans
+  // 1. Direct document key lookup
+  if (canUseStorage()) {
+    try {
+      const direct = window.localStorage.getItem(`veriscan-doc-${id}`);
+      if (direct) {
+        const parsed = JSON.parse(direct) as VerificationDocument;
+        if (parsed?.id === id) return parsed;
+      }
+    } catch {}
+  }
+
+  // 2. Search current user's scans
   const userScans = readUserScans(userIdentifier);
   const found = userScans.find((doc) => doc.id === id);
   if (found) return found;
 
-  // 2. Search across user scan stores
+  // 3. Search across all user scan stores in localStorage
   if (canUseStorage()) {
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
-      if (key && key.startsWith("veriscan-scans-")) {
+      if (key && (key.startsWith("veriscan-scans-") || key === "veriscan-latest-scan")) {
         try {
           const raw = window.localStorage.getItem(key);
           if (raw) {
-            const docs = JSON.parse(raw) as VerificationDocument[];
-            const match = docs.find((d) => d.id === id);
-            if (match) return match;
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const match = parsed.find((d: any) => String(d?.id) === String(id));
+              if (match) return match as VerificationDocument;
+            } else if (parsed && typeof parsed === "object") {
+              if (String(parsed.id) === String(id) || id === "latest") {
+                return parsed as VerificationDocument;
+              }
+            }
           }
         } catch {}
       }
     }
+
+    // 4. If ID is "latest", return the latest scan directly
+    if (id === "latest") {
+      try {
+        const latest = window.localStorage.getItem("veriscan-latest-scan");
+        if (latest) return JSON.parse(latest) as VerificationDocument;
+      } catch {}
+    }
   }
 
-  // 3. Fallback to demo specimen records
-  return demoDocuments.find((document) => document.id === id);
+  // 5. Fallback to demo specimen records ONLY for explicit demo IDs
+  if (id.startsWith("doc-")) {
+    return demoDocuments.find((document) => document.id === id);
+  }
+
+  return undefined;
 }

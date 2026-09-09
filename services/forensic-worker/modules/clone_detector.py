@@ -8,7 +8,7 @@ from PIL import Image
 
 def detect_copy_move(
     image: Image.Image,
-    min_cluster_points: int = 6,
+    min_cluster_points: int = 28,
     spatial_dist_threshold: float = 30.0,
 ) -> dict[str, Any]:
     try:
