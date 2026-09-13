@@ -2,61 +2,52 @@
 @import "tw-animate-css";
 
 @theme inline {
-  /* Futuristic Cyber-Forensic Obsidian Command Center Palette */
-  --color-obsidian-950: #0a0a0c;
-  --color-obsidian-900: #0e0e12;
-  --color-obsidian-850: #101014;
-  --color-obsidian-800: #121217;
-  --color-obsidian-750: #17171f;
-  --color-obsidian-700: #1e1e28;
-  --color-obsidian-border: rgba(255, 255, 255, 0.1);
-  --color-obsidian-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-obsidian-border-light: rgba(255, 255, 255, 0.15);
+  /* Clean, Airy Light-Mode Surfaces & Accents */
+  --color-surface-white: #ffffff;
+  --color-surface-platinum: #f8fafc;
+  --color-surface-subtle: #f1f5f9;
+  --color-border-card: rgba(226, 232, 240, 0.85);
+  --color-border-subtle: rgba(241, 245, 249, 0.9);
 
-  --color-bg-base: #0a0a0c;
-  --color-bg-panel: #101014;
-  --color-bg-panel-light: #F4F1EA;
-  --color-bg-panel-nested: #14141a;
-  --color-border-terminal: rgba(255, 255, 255, 0.1);
-  --color-border-light: #D8D2C5;
+  /* Typography Colors */
+  --color-charcoal-primary: #0f172a;
+  --color-charcoal-secondary: #475569;
+  --color-charcoal-muted: #64748b;
+  --color-charcoal-light: #94a3b8;
 
-  /* Sharp Industrial & Forensic Status Accents */
-  --color-saffron: #FF9933;
-  --color-saffron-hover: #E68524;
-  --color-saffron-light: rgba(255, 153, 51, 0.12);
-  --color-saffron-glow: rgba(255, 153, 51, 0.25);
-  
-  --color-india-green: #10B981;
-  --color-india-green-hover: #059669;
-  --color-india-green-light: rgba(16, 185, 129, 0.12);
-  --color-india-green-glow: rgba(16, 185, 129, 0.25);
-  
-  --color-ashoka-navy: #000080;
-  --color-cyan-telemetry: #06B6D4;
-  --color-cyan-glow: rgba(6, 182, 212, 0.2);
+  /* Refined High-Visibility Accents */
+  --color-indigo-interactive: #4f46e5;
+  --color-indigo-hover: #4338ca;
+  --color-indigo-subtle: #eef2ff;
+  --color-indigo-border: #c7d2fe;
 
-  /* Status Colors */
-  --color-verified: #10B981;
-  --color-review: #FF9933;
-  --color-forged: #EF4444;
+  --color-emerald-pass: #059669;
+  --color-emerald-subtle: #ecfdf5;
+  --color-emerald-border: #a7f3d0;
 
-  /* Typography */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Playfair Display", Georgia, "Libre Baskerville", serif;
+  --color-crimson-alert: #dc2626;
+  --color-crimson-subtle: #fef2f2;
+  --color-crimson-border: #fecaca;
+
+  --color-amber-warning: #d97706;
+  --color-amber-subtle: #fffbeb;
+  --color-amber-border: #fde68a;
+
+  /* Typography: Modern Sans-Serif Default */
+  --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Brutalist Radii: Flat / Ultra-Compact */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 6px;
+  /* Soft Elegant Depth Radii */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
 :root {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #FAF7F0;
-  background-color: #0a0a0c;
+  font-family: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #0f172a;
+  background-color: #f8fafc;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -68,60 +59,68 @@
 
 html {
   scroll-behavior: smooth;
-  background-color: #0a0a0c;
+  background-color: #f8fafc;
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background-color: #0a0a0c;
-  color: #FAF7F0;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  line-height: 1.5;
 }
 
 /* Typography Hierarchy */
-h1, h2, h3, .font-serif {
-  font-family: "Playfair Display", Georgia, serif;
-  letter-spacing: -0.01em;
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-.font-mono {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-}
-
-/* Sharp Accessible Focus */
+/* Sharp Accessible Focus with Electric Indigo */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 1.5px solid #FF9933;
-  outline-offset: 1px;
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
 }
 
-/* Command Center Terminals & Panels */
-.terminal-panel {
-  background-color: #101014;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: none !important;
+/* Clean Airy Forensic Surface Cards with Soft Drop-Shadow Depth */
+.terminal-panel,
+.forensic-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.terminal-panel-light {
-  background-color: #F4F1EA;
-  border: 1px solid #D8D2C5;
-  color: #12151A;
-  box-shadow: none !important;
+.terminal-panel:hover,
+.forensic-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+.terminal-panel-void {
+  background-color: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  border-radius: 0.625rem;
 }
 
 .terminal-panel-nested {
-  background-color: #14141a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #f1f5f9;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
 }
 
-/* Hairline Ribbons & Dividers */
+/* Hairline Dividers */
 .terminal-hairline {
   height: 1px;
-  background-color: #23272F;
+  background-color: #e2e8f0;
 }
 
 .tiranga-stripe {
@@ -141,34 +140,34 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.15rem 0.45rem;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  border-radius: 2px;
-  border: 1px solid #23272F;
-  background: #181C22;
-  color: #D1CEC7;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
 }
 
 .command-badge-verified {
-  border-color: rgba(16, 185, 129, 0.6);
-  background: rgba(16, 185, 129, 0.14);
-  color: #34D399;
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
 }
 
 .command-badge-review {
-  border-color: rgba(255, 153, 51, 0.6);
-  background: rgba(255, 153, 51, 0.14);
-  color: #FFB057;
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
 }
 
 .command-badge-forged {
-  border-color: rgba(239, 68, 68, 0.6);
-  background: rgba(239, 68, 68, 0.14);
-  color: #F87171;
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 /* Dropzone & Upload Target */
@@ -179,65 +178,68 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  border: 1px dashed #FF9933;
-  border-radius: 3px;
-  background-color: #12151A;
+  border: 2px dashed #c7d2fe;
+  border-radius: 0.75rem;
+  background-color: #f8fafc;
   transition: border-color 150ms ease, background-color 150ms ease;
-  box-shadow: none !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
 .upload-dropzone:hover,
 .upload-dropzone-active {
-  border-color: #FFB057;
-  background-color: #181C22;
+  border-color: #4f46e5;
+  background-color: #eef2ff;
 }
 
 .upload-dropzone-light {
-  background-color: #F4F1EA;
-  border: 1px dashed #FF9933;
-  color: #12151A;
+  background-color: #ffffff;
+  border: 2px dashed #c7d2fe;
+  color: #0f172a;
 }
 
 .upload-dropzone-light:hover {
-  background-color: #ECE7DC;
+  background-color: #eef2ff;
+  border-color: #4f46e5;
 }
 
 /* Dense Dossier & Telemetry Tables */
 .dossier-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .dossier-table th {
-  padding: 0.45rem 0.65rem;
+  padding: 0.55rem 0.75rem;
   text-align: left;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #8C8F96;
-  border-bottom: 1px solid #23272F;
-  background: #101318;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .dossier-table td {
-  padding: 0.5rem 0.65rem;
+  padding: 0.65rem 0.75rem;
   vertical-align: middle;
-  border-bottom: 1px solid #1D2128;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
 }
 
 .dossier-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.025);
+  background-color: #f8fafc;
 }
 
-/* Cyber Forensic Loupe Canvas Grid */
+/* Cyber Forensic Loupe Canvas Grid (Clean Light Mode) */
 .cyber-canvas-grid {
   background-image: 
-    linear-gradient(rgba(35, 39, 47, 0.35) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(35, 39, 47, 0.35) 1px, transparent 1px);
+    linear-gradient(rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(203, 213, 225, 0.45) 1px, transparent 1px);
   background-size: 20px 20px;
+  background-color: #f8fafc;
 }
 
 /* Reticle Crosshairs */
@@ -247,7 +249,7 @@ textarea:focus-visible {
   left: 0;
   right: 0;
   height: 1px;
-  background: rgba(255, 153, 51, 0.4);
+  background: rgba(79, 70, 229, 0.5);
   pointer-events: none;
 }
 
@@ -257,7 +259,7 @@ textarea:focus-visible {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(255, 153, 51, 0.4);
+  background: rgba(79, 70, 229, 0.5);
   pointer-events: none;
 }
 

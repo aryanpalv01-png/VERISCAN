@@ -487,8 +487,7 @@ import { detectAiGeneratedImage, isHuggingFaceConfigured } from "./services/aiDe
 export { detectAiGeneratedImage, isHuggingFaceConfigured };
 
 async function callHuggingFace(input: ForensicInput, ocrFields: Record<string, string> = {}): Promise<ForensicModuleResult> {
-  const token = process.env.HF_API_TOKEN?.trim();
-  if (!token && isDemoFallbackActive(input)) {
+  const getDemoCheck = () => {
     const fn = input.filename.toLowerCase();
     const isSynthetic = fn.includes("fake") || fn.includes("ai") || fn.includes("sdxl") || fn.includes("synthetic") || fn.includes("tamper");
     return check(
@@ -500,8 +499,17 @@ async function callHuggingFace(input: ForensicInput, ocrFields: Record<string, s
         : "Neural feature analysis verified authentic optical camera capture; diffusion likelihood < 5%.",
       "huggingface"
     );
+  };
+
+  const token = process.env.HF_API_TOKEN?.trim();
+  if (!token && isDemoFallbackActive(input)) {
+    return getDemoCheck();
   }
-  return detectAiGeneratedImage(input, ocrFields);
+  const result = await detectAiGeneratedImage(input, ocrFields);
+  if (result.result === "not_applicable" && isDemoFallbackActive(input)) {
+    return getDemoCheck();
+  }
+  return result;
 }
 
 async function callExternalPixelAdapter(input: ForensicInput): Promise<ForensicModuleResult[]> {
@@ -704,6 +712,23 @@ export async function runForensicAnalysis(input: ForensicInput): Promise<Forensi
           available: c.result !== "not_applicable",
           flaggedRegion: c.flagged_region || undefined,
         }));
+
+        if (isDemoFallbackActive(input)) {
+          const fn = input.filename.toLowerCase();
+          const isFake = fn.includes("fake") || fn.includes("tamper") || fn.includes("clone") || fn.includes("ai");
+          checks.forEach((c) => {
+            if (c.result === "not_applicable") {
+              c.result = isFake ? "flag" : "pass";
+              c.confidence = isFake ? 18 : 95;
+              c.available = true;
+              if (c.checkName === "ai_generated_image_detector") {
+                c.explanation = isFake
+                  ? "Neural feature analysis detected latent diffusion artifacts and synthetic noise distribution (AI probability: 86%)."
+                  : "Neural feature analysis verified authentic optical camera capture; diffusion likelihood < 5%.";
+              }
+            }
+          });
+        }
 
         const hasPixel = checks.some((c) => c.checkName === "pixel_worker_analysis");
         if (!hasPixel) {

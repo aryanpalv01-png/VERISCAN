@@ -11,11 +11,11 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   ];
 
   return (
-    <div className="inline-flex items-center border border-[#3A3D45] bg-[#1C1E22] font-mono text-[11px] select-none">
-      <div className="flex items-center px-1.5 py-0.5 text-[#FF9933] border-r border-[#3A3D45]/70">
+    <div className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 font-sans text-[11px] select-none shadow-xs overflow-hidden">
+      <div className="flex items-center px-1.5 py-0.5 text-indigo-600 border-r border-slate-200">
         <Globe className="h-3 w-3" />
       </div>
-      <div className="flex items-center divide-x divide-[#3A3D45]/70">
+      <div className="flex items-center divide-x divide-slate-200">
         {options.map((opt) => {
           const isActive = language === opt.code;
           return (
@@ -23,10 +23,10 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
               key={opt.code}
               type="button"
               onClick={() => setLanguage(opt.code)}
-              className={`px-2 py-0.5 transition-colors cursor-pointer ${
+              className={`px-2 py-0.5 transition-colors cursor-pointer font-medium ${
                 isActive
-                  ? "bg-[#FF9933] text-slate-950 font-bold"
-                  : "text-[#A09D95] hover:text-[#FAF7F0] hover:bg-[#26282D]"
+                  ? "bg-indigo-600 text-white font-semibold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               }`}
               title={opt.label}
               aria-label={`Switch language to ${opt.label}`}

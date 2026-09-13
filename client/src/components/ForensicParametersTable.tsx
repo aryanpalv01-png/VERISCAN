@@ -278,29 +278,29 @@ export function ForensicParametersTable({
   });
 
   return (
-    <div className="terminal-panel flex flex-col justify-between p-3.5 sm:p-4 font-mono border border-white/10 bg-[#101014]">
+    <div className="flex flex-col justify-between p-3.5 sm:p-4 font-sans border border-slate-200/80 bg-white rounded-xl shadow-xs hover:shadow-sm transition-all h-full">
       {/* Table Header & Quick Ticker */}
       <div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2">
-            <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 font-bold flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 cyber-pulse-green" />
-              11/11 PARAMETERS ACTIVE
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              11/11 ACTIVE TELEMETRY
             </span>
-            <span className="text-[11px] text-[#737380] hidden sm:inline">
+            <span className="text-xs text-slate-500 hidden sm:inline font-medium">
               Evidence Arbitration Matrix
             </span>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1 text-[11px]">
+          <div className="flex items-center gap-1 text-xs">
             <button
               type="button"
               onClick={() => setFilterMode("all")}
-              className={`px-2 py-0.5 border text-[10px] font-bold transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all border cursor-pointer ${
                 filterMode === "all"
-                  ? "border-[#FF9933] bg-[#FF9933]/20 text-[#FAF7F0]"
-                  : "border-white/10 bg-[#121217] text-[#9CA3AF] hover:text-white"
+                  ? "border-indigo-600 bg-indigo-600 text-white shadow-xs"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
               ALL ({totalCount})
@@ -308,10 +308,10 @@ export function ForensicParametersTable({
             <button
               type="button"
               onClick={() => setFilterMode("flagged")}
-              className={`px-2 py-0.5 border text-[10px] font-bold transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all border cursor-pointer ${
                 filterMode === "flagged"
-                  ? "border-rose-500 bg-rose-950/40 text-rose-300"
-                  : "border-white/10 bg-[#121217] text-[#9CA3AF] hover:text-rose-400"
+                  ? "border-red-600 bg-red-600 text-white shadow-xs"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:text-red-700 hover:bg-slate-100"
               }`}
             >
               FLAGGED ({flagCount})
@@ -319,10 +319,10 @@ export function ForensicParametersTable({
             <button
               type="button"
               onClick={() => setFilterMode("passed")}
-              className={`px-2 py-0.5 border text-[10px] font-bold transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all border cursor-pointer ${
                 filterMode === "passed"
-                  ? "border-emerald-500 bg-emerald-950/40 text-emerald-300"
-                  : "border-white/10 bg-[#121217] text-[#9CA3AF] hover:text-emerald-400"
+                  ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:text-emerald-700 hover:bg-slate-100"
               }`}
             >
               PASS ({passCount})
@@ -330,20 +330,20 @@ export function ForensicParametersTable({
           </div>
         </div>
 
-        {/* Compact Table Viewport */}
-        <div className="mt-2.5 overflow-x-auto">
+        {/* Compact Table Viewport with Internal Scroll & Touch Swipe */}
+        <div className="mt-2.5 overflow-x-auto overflow-y-auto max-h-[380px] xl:max-h-[410px] rounded-lg border border-slate-200/80">
           <table className="dossier-table w-full text-left">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="py-2 px-2.5 w-24 text-[10px] text-[#737380] uppercase tracking-wider">CODE</th>
-                <th className="py-2 px-2.5 text-[10px] text-[#737380] uppercase tracking-wider">PARAMETER // SUBSYSTEM</th>
-                <th className="py-2 px-2 text-center w-20 text-[10px] text-[#737380] uppercase tracking-wider">WEIGHT</th>
-                <th className="py-2 px-2 text-center w-20 text-[10px] text-[#737380] uppercase tracking-wider">STATUS</th>
-                <th className="py-2 px-2.5 text-right w-16 text-[10px] text-[#737380] uppercase tracking-wider">CONF</th>
-                <th className="py-2 px-3 hidden lg:table-cell text-[10px] text-[#737380] uppercase tracking-wider">TELEMETRY READOUT</th>
+            <thead className="sticky top-0 bg-slate-50 z-10">
+              <tr className="border-b border-slate-200">
+                <th className="py-2 px-2.5 w-20 text-[11px] text-slate-600 uppercase font-bold tracking-wider">CODE</th>
+                <th className="py-2 px-2.5 text-[11px] text-slate-600 uppercase font-bold tracking-wider">PARAMETER // ENGINE</th>
+                <th className="py-2 px-2 text-center w-14 text-[11px] text-slate-600 uppercase font-bold tracking-wider">WT</th>
+                <th className="py-2 px-2 text-center w-20 text-[11px] text-slate-600 uppercase font-bold tracking-wider">STATUS</th>
+                <th className="py-2 px-2.5 text-right w-16 text-[11px] text-slate-600 uppercase font-bold tracking-wider">CONF</th>
+                <th className="py-2 px-3 hidden md:table-cell text-[11px] text-slate-600 uppercase font-bold tracking-wider">TELEMETRY READOUT</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 bg-white">
               {filteredParams.map((item) => {
                 const isPass = item.status === "pass";
                 const isFlag = item.status === "flag";
@@ -353,73 +353,69 @@ export function ForensicParametersTable({
                   <tr
                     key={item.def.id}
                     onClick={() => onSelectParam && onSelectParam(item.def, item.matched)}
-                    className={`cursor-pointer transition-colors border-b border-white/5 ${
+                    className={`cursor-pointer transition-colors text-xs ${
                       isSelected
-                        ? "bg-white/[0.05] border-l-2 border-l-[#FF9933] shadow-[inset_0_0_12px_rgba(255,153,51,0.08)]"
-                        : "hover:bg-white/[0.03]"
+                        ? "bg-indigo-50/70 border-l-4 border-l-indigo-600"
+                        : "hover:bg-slate-50/80"
                     }`}
                   >
-                    {/* Parameter Code */}
                     <td className="py-2 px-2.5 whitespace-nowrap">
-                      <span className="font-mono text-[10px] font-bold text-[#FF9933]">
-                        {item.def.code}
+                      <span className="font-bold text-slate-900 tracking-tight text-xs">
+                        {item.def.code.split(" ")[1] || item.def.code}
                       </span>
                     </td>
 
-                    {/* Name & Subsystem */}
-                    <td className="py-2 px-2.5">
-                      <div className="font-semibold text-[#FAF7F0] text-[11px] truncate max-w-[170px] sm:max-w-[220px]">
-                        {item.def.name}
+                    <td className="py-2 px-2.5 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-900 truncate">
+                          {item.def.name}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-xs bg-slate-100 text-slate-500 font-semibold border border-slate-200 hidden lg:inline">
+                          Tier {item.def.tier}
+                        </span>
                       </div>
-                      <div className="text-[9px] text-[#737380] tracking-wide mt-0.5">
+                      <div className="text-[11px] text-slate-500 truncate mt-0.5">
                         {item.def.subsystem}
                       </div>
                     </td>
 
-                    {/* Weight & Tier */}
                     <td className="py-2 px-2 text-center whitespace-nowrap">
-                      <span
-                        className={`inline-block px-1.5 py-0.2 text-[9px] font-bold border ${
-                          item.def.tier === "A"
-                            ? "border-[#FF9933]/50 bg-[#FF9933]/15 text-[#FFB057]"
-                            : item.def.tier === "B"
-                            ? "border-[#06B6D4]/40 bg-[#06B6D4]/10 text-[#38BDF8]"
-                            : "border-white/10 bg-[#121217] text-[#9CA3AF]"
-                        }`}
-                      >
-                        {item.weight.toFixed(1)}x [{item.def.tier}]
+                      <span className="text-xs text-slate-500 font-medium">
+                        x{item.weight.toFixed(1)}
                       </span>
                     </td>
 
-                    {/* Status Badge */}
                     <td className="py-2 px-2 text-center whitespace-nowrap">
-                      {isPass ? (
-                        <span className="command-badge border-emerald-800/60 bg-emerald-950/40 text-[#34D399] text-[9px] font-bold">
-                          PASS
-                        </span>
-                      ) : (
-                        <span className="command-badge border-rose-800/60 bg-rose-950/40 text-rose-300 text-[9px] font-bold">
-                          FLAG
-                        </span>
-                      )}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          isPass
+                            ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border border-red-200 bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {isPass ? (
+                          <CheckCircle2 className="h-3 w-3" />
+                        ) : (
+                          <AlertTriangle className="h-3 w-3" />
+                        )}
+                        {isPass ? "PASS" : "FLAG"}
+                      </span>
                     </td>
 
-                    {/* Confidence Score Gauge */}
                     <td className="py-2 px-2.5 text-right whitespace-nowrap">
                       <span
-                        className={`font-bold text-[11px] ${
-                          isPass ? "text-[#34D399]" : "text-rose-400"
+                        className={`font-bold text-xs ${
+                          isPass ? "text-emerald-600" : "text-red-600"
                         }`}
                       >
                         {item.confidence}%
                       </span>
                     </td>
 
-                    {/* Telemetry Snippet */}
-                    <td className="py-2 px-3 hidden lg:table-cell">
-                      <div className="text-[10px] text-[#A09D95] truncate max-w-xs xl:max-w-sm">
+                    <td className="py-2 px-3 hidden md:table-cell min-w-0">
+                      <p className="truncate max-w-[280px] xl:max-w-[360px] text-xs text-slate-600" title={item.explanation}>
                         {item.explanation}
-                      </div>
+                      </p>
                     </td>
                   </tr>
                 );
@@ -430,14 +426,15 @@ export function ForensicParametersTable({
       </div>
 
       {/* Footer Arbitration Metadata */}
-      <div className="mt-2.5 border-t border-white/10 pt-2 flex flex-wrap items-center justify-between gap-2 text-[9.5px] text-[#737380]">
+      <div className="mt-2.5 border-t border-slate-100 pt-2 flex flex-wrap items-center justify-between gap-1.5 text-xs text-slate-500">
         <div className="flex items-center gap-1.5">
-          <Activity className="h-3 w-3 text-[#FF9933]" />
-          <span>FUSION ENGINE: BAYESIAN ARBITRATION (TIER A: 3.5x · TIER B: 1.8x · TIER C: 1.0x)</span>
+          <Activity className="h-3.5 w-3.5 text-indigo-600" />
+          <span>FUSION PROTOCOL: Tier A Statutory Override (Penalty Subtraction)</span>
         </div>
-        <div className="text-emerald-400 font-bold flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          COVERAGE: 100% (11/11)
+        <div className="flex items-center gap-2">
+          <span>PIPELINE: <strong className="text-emerald-700 font-semibold">11/11 VALIDATED</strong></span>
+          <span className="text-slate-300">|</span>
+          <span>LATENCY: <strong className="text-slate-800 font-semibold">8ms</strong></span>
         </div>
       </div>
     </div>

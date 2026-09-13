@@ -42,15 +42,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
-function CircularScoreGauge({ score, size = 52 }: { score: number; size?: number }) {
-  const strokeWidth = 4.5;
+function CircularScoreGauge({ score, size = 42 }: { score: number; size?: number }) {
+  const strokeWidth = 4;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, Math.round(score)));
   const offset = circumference - (clamped / 100) * circumference;
 
   const strokeColor =
-    clamped >= 80 ? "#10B981" : clamped >= 50 ? "#FF9933" : "#EF4444";
+    clamped >= 80 ? "#059669" : clamped >= 50 ? "#d97706" : "#dc2626";
 
   return (
     <div
@@ -62,7 +62,7 @@ function CircularScoreGauge({ score, size = 52 }: { score: number; size?: number
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#23272F"
+          stroke="#e2e8f0"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -79,9 +79,9 @@ function CircularScoreGauge({ score, size = 52 }: { score: number; size?: number
           className="transition-all duration-500 ease-out"
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center font-mono">
-        <span className="text-[11px] font-bold text-[#FAF7F0] leading-none">{clamped}</span>
-        <span className="text-[7.5px] text-[#9CA3AF] leading-none mt-0.5">/100</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center font-sans">
+        <span className="text-[11px] font-extrabold text-slate-900 leading-none">{clamped}</span>
+        <span className="text-[7.5px] text-slate-400 font-semibold leading-none mt-0.5">%</span>
       </div>
     </div>
   );
@@ -98,6 +98,7 @@ export default function Dashboard() {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [selectedCheckId, setSelectedCheckId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState("");
+  const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentFileRef = useRef<File | undefined>(undefined);
@@ -313,148 +314,151 @@ export default function Dashboard() {
   // Active document telemetry helpers
   const isVerified = activeDocument.status === "verified";
   const isForged = activeDocument.status === "likely_forged";
-  const activeModulesCount = activeDocument.activeModulesCount ?? 11;
 
   return (
-    <div className="mx-auto w-full space-y-3.5">
-      {/* Real-Time Command Telemetry HUD */}
-      <div className="terminal-panel p-3 sm:p-3.5 font-mono border border-white/10 bg-[#101014]">
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-          {/* Specimen Reference & Status Beacon */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 cyber-pulse-green" />
-              <span className="text-xs font-bold text-[#FF9933]">
-                REF: {activeDocument.reference}
-              </span>
-            </div>
-
-            <div className="h-3.5 w-px bg-white/10 hidden sm:block" />
-
-            <div className="flex items-center gap-1.5 text-xs text-[#9CA3AF]">
-              <span>SPECIMEN:</span>
-              <strong className="text-white truncate max-w-[180px] sm:max-w-[240px]">
-                {activeDocument.filename}
-              </strong>
-            </div>
-
-            <span className="command-badge border-white/10 bg-[#0a0a0c] text-[#FAF7F0] text-[9.5px] uppercase">
-              {formatDocumentType(activeDocument.type)}
+    <div className="mx-auto w-full space-y-3 font-sans">
+      {/* Command Header: Minimalist Top Nav (Zero Fluff, Zero Explanatory Text) */}
+      <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 sm:px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white shadow-xs">
+        {/* Left: Live System Health Indicator & Active Project Target */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <span className="font-extrabold text-slate-900 tracking-tight text-sm">
+              VeriScan // SIH-2026
             </span>
           </div>
 
-          {/* Telemetry Metrics & Score Gauge */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-5 self-start lg:self-auto">
-            {/* Active Checks Readout */}
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-[9.5px] uppercase text-[#737380]">Telemetry Modules</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                  <span>11/11 ACTIVE</span>
-                </div>
+          <span className="hidden sm:inline text-slate-300">|</span>
+
+          {/* Active Specimen Chip */}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
+            <span className="font-semibold text-slate-900 truncate max-w-[180px] lg:max-w-[240px]">
+              {activeDocument.filename}
+            </span>
+            <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 font-mono">
+              {activeDocument.reference}
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Live Bayesian Integrity Score & Verdict */}
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              isVerified
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                : isForged
+                ? "border border-red-200 bg-red-50 text-red-700"
+                : "border border-amber-200 bg-amber-50 text-amber-700"
+            }`}
+          >
+            {isVerified ? (
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            ) : (
+              <ShieldAlert className="h-3.5 w-3.5 text-red-600" />
+            )}
+            <span>{statusMeta[activeDocument.status as DocumentStatus]?.label || "Verified Genuine"}</span>
+          </span>
+
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+            <CircularScoreGauge score={activeDocument.score} size={36} />
+            <div className="hidden md:block text-left">
+              <div className="text-[9.5px] uppercase font-bold text-slate-400 tracking-wider">Score</div>
+              <div className="text-xs font-extrabold text-slate-900 leading-none">
+                {activeDocument.score}/100
               </div>
-            </div>
-
-            {/* Tamper Verdict Badge */}
-            <div>
-              <div className="text-[9.5px] uppercase text-[#737380] mb-0.5">Integrity Verdict</div>
-              <span
-                className={`command-badge text-[10px] font-bold ${
-                  isVerified
-                    ? "border-emerald-800/60 bg-emerald-950/40 text-[#34D399]"
-                    : isForged
-                    ? "border-rose-800/60 bg-rose-950/40 text-rose-300"
-                    : "border-amber-800/60 bg-amber-950/40 text-amber-300"
-                }`}
-              >
-                {isVerified ? (
-                  <ShieldCheck className="h-3 w-3" />
-                ) : (
-                  <ShieldAlert className="h-3 w-3" />
-                )}
-                {statusMeta[activeDocument.status as DocumentStatus]?.label || "Verified Genuine"}
-              </span>
-            </div>
-
-            {/* Circular Bayesian Confidence Score Gauge */}
-            <div className="flex items-center gap-2 pl-2 border-l border-white/10">
-              <CircularScoreGauge score={activeDocument.score} size={44} />
-              <div className="text-left">
-                <div className="text-[9px] uppercase text-[#737380]">Bayesian Index</div>
-                <div className="text-xs font-bold text-white">
-                  {activeDocument.score}%
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Action Buttons */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={createScan.isPending}
-                className="inline-flex items-center gap-1.5 border border-[#FF9933] bg-[#FF9933] hover:bg-[#E68524] text-slate-950 font-bold px-3 py-1.5 text-xs transition-colors cursor-pointer"
-              >
-                <UploadCloud className="h-3.5 w-3.5" />
-                <span>{createScan.isPending ? "Analyzing..." : "Ingest Specimen"}</span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,application/pdf"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleFileIngest(e.target.files[0]);
-                  }
-                }}
-              />
-
-              <Link href={`/report/${activeDocument.id}`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 border-white/10 bg-[#121217] text-[#FAF7F0] hover:bg-[#17171f] hover:border-[#FF9933] text-xs font-mono font-semibold gap-1 px-2.5"
-                >
-                  <span>Dossier</span>
-                  <ExternalLink className="h-3 w-3 text-[#FF9933]" />
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Right: Rapid File-Drop Zone Button & Quick Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={createScan.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 text-xs shadow-xs hover:shadow transition-all cursor-pointer disabled:opacity-50"
+          >
+            <UploadCloud className="h-3.5 w-3.5" />
+            <span>{createScan.isPending ? "Ingesting..." : "+ Ingest Specimen"}</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                handleFileIngest(e.target.files[0]);
+              }
+            }}
+          />
+
+          <Link href={`/report/${activeDocument.id}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-indigo-600 text-xs font-semibold gap-1 px-2.5 rounded-lg shadow-xs"
+            >
+              <span>Dossier</span>
+              <ExternalLink className="h-3 w-3 text-indigo-600" />
+            </Button>
+          </Link>
+        </div>
+      </header>
 
       {uploadError && (
         <div
-          className="border border-rose-500/50 bg-rose-950/30 px-3 py-1.5 font-mono text-xs text-rose-300 flex items-center justify-between"
+          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between"
           role="alert"
         >
           <span>Error processing specimen: {uploadError}</span>
           <button
             onClick={() => setUploadError("")}
-            className="text-rose-400 hover:text-white"
+            className="text-red-700 hover:underline font-semibold"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Main Forensic Workspace Split Grid (Seamless Two-Column Layout) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
-        {/* Left Panel: Specimen Loupe & Coordinate Canvas */}
-        <div className="w-full">
-          <ForensicSpecimenLoupe
-            document={activeDocument}
-            selectedCheckId={selectedCheckId}
-            onSelectCheck={handleSelectCheck}
-            onFileIngest={handleFileIngest}
-            isIngesting={createScan.isPending}
-          />
+      {/* Main Forensic Workspace: Strict Asymmetric 12-Column Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3.5 xl:h-[calc(100vh-148px)] xl:overflow-hidden">
+        {/* Columns 1-5: Interactive Document Specimen Inspector */}
+        <div className="xl:col-span-5 h-full flex flex-col justify-between overflow-hidden">
+          {/* Mobile/Tablet Accordion Drawer Trigger (<1200px) */}
+          <div className="xl:hidden mb-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileInspectorOpen(!isMobileInspectorOpen)}
+              className="w-full flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-xs"
+            >
+              <span className="flex items-center gap-1.5">
+                <Crosshair className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Document Specimen Inspector</span>
+              </span>
+              <span className="text-indigo-600 text-[11px] font-semibold">
+                {isMobileInspectorOpen ? "Collapse Drawer ▲" : "Expand Drawer ▼"}
+              </span>
+            </button>
+          </div>
+
+          <div className={`${isMobileInspectorOpen ? "block" : "hidden xl:block"} h-full`}>
+            <ForensicSpecimenLoupe
+              document={activeDocument}
+              selectedCheckId={selectedCheckId}
+              onSelectCheck={handleSelectCheck}
+              onFileIngest={handleFileIngest}
+              isIngesting={createScan.isPending}
+            />
+          </div>
         </div>
 
-        {/* Right Panel: Compact 11 Forensic Parameters Matrix */}
-        <div className="w-full">
+        {/* Columns 6-12: High-Density Forensic Telemetry Matrix (All 11 Checks) */}
+        <div className="xl:col-span-7 h-full flex flex-col justify-between overflow-hidden">
           <ForensicParametersTable
             document={activeDocument}
             selectedCheckId={selectedCheckId}
@@ -463,21 +467,21 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Specimen Quick-Switch Ledger */}
-      <div className="terminal-panel p-3 sm:p-3.5 font-mono border border-white/10 bg-[#101014]">
-        <div className="flex items-center justify-between border-b border-white/10 pb-2 text-xs">
+      {/* Bottom Specimen Switcher Ledger */}
+      <div className="p-3 sm:p-3.5 rounded-xl border border-slate-200/80 bg-white shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-[#9CA3AF] font-bold text-[10.5px] uppercase tracking-wider">
+            <span className="text-slate-800 font-bold text-xs uppercase tracking-wide">
               Specimen Ledger ({allDocuments.length})
             </span>
-            <span className="text-[9.5px] text-[#737380] hidden sm:inline">
+            <span className="text-slate-400 text-[11px] hidden sm:inline">
               Select record to inspect live telemetry
             </span>
           </div>
 
           <Link
             href="/history"
-            className="text-[10.5px] text-[#FF9933] hover:text-white transition-colors flex items-center gap-1"
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1"
           >
             <span>Audit Trail</span>
             <ArrowRight className="h-3 w-3" />
@@ -499,19 +503,19 @@ export default function Dashboard() {
                   setSelectedDocId(doc.id);
                   setSelectedCheckId(null);
                 }}
-                className={`shrink-0 flex items-center gap-2 p-1.5 border text-left transition-all cursor-pointer ${
+                className={`shrink-0 flex items-center gap-2 p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
                   isSelected
-                    ? "border-[#FF9933] bg-[#17171f] shadow-[0_0_12px_rgba(255,153,51,0.12)]"
-                    : "border-white/10 bg-[#121217] hover:border-white/20 hover:bg-[#14141a]"
+                    ? "border-indigo-500 bg-indigo-50/70 shadow-xs ring-1 ring-indigo-400"
+                    : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-100"
                 }`}
               >
                 <div
-                  className={`flex h-6 w-6 items-center justify-center border font-bold text-[9.5px] ${
+                  className={`flex h-6 w-6 items-center justify-center rounded-md font-bold text-[10px] ${
                     docVerified
-                      ? "border-emerald-800 bg-emerald-950/40 text-[#34D399]"
+                      ? "bg-emerald-100 text-emerald-800"
                       : docForged
-                      ? "border-rose-800 bg-rose-950/40 text-rose-400"
-                      : "border-amber-800 bg-amber-950/40 text-amber-400"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-amber-100 text-amber-800"
                   }`}
                 >
                   {doc.score}
@@ -519,14 +523,14 @@ export default function Dashboard() {
 
                 <div className="min-w-0 pr-1">
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-bold text-[#FAF7F0] truncate max-w-[120px]">
+                    <span className="text-[11px] font-bold text-slate-900 truncate max-w-[120px]">
                       {doc.reference}
                     </span>
-                    <span className="text-[8.5px] text-[#737380] uppercase">
+                    <span className="text-[9px] font-semibold text-slate-500 uppercase">
                       {doc.type}
                     </span>
                   </div>
-                  <div className="text-[9px] text-[#737380] truncate max-w-[130px]">
+                  <div className="text-[10px] text-slate-500 truncate max-w-[130px]">
                     {doc.filename}
                   </div>
                 </div>
