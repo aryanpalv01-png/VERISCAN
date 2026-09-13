@@ -72,12 +72,12 @@ export default function DashboardLayout({
 
   if (!user && !allowGuest) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#1C1E22] text-[#FAF7F0]">
+      <div className="flex min-h-screen flex-col bg-[#0a0a0c] text-[#FAF7F0]">
         <GovMasthead theme="dark" />
 
         <div className="flex flex-1 items-center justify-center px-4 py-12">
-          <div className="w-full max-w-md terminal-panel p-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-[#FF9933] bg-[#1C1E22] text-[#FF9933]">
+          <div className="w-full max-w-md terminal-panel p-8 text-center border border-white/10 bg-[#101014]">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-[#FF9933] bg-[#0a0a0c] text-[#FF9933]">
               <AshokaChakra className="h-7 w-7 text-[#FF9933]" />
             </div>
 
