@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: BharatDrishti
+    name: VeriScan
     runtime: node
     plan: free
     branch: main
