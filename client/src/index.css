@@ -2,34 +2,50 @@
 @import "tw-animate-css";
 
 @theme inline {
-  /* Institutional Command Center Matte Palette */
-  --color-bg-base: #1C1E22;
-  --color-bg-panel: #26282D;
+  /* Futuristic Cyber-Forensic Obsidian Command Center Palette */
+  --color-obsidian-950: #0a0a0c;
+  --color-obsidian-900: #0e0e12;
+  --color-obsidian-850: #101014;
+  --color-obsidian-800: #121217;
+  --color-obsidian-750: #17171f;
+  --color-obsidian-700: #1e1e28;
+  --color-obsidian-border: rgba(255, 255, 255, 0.1);
+  --color-obsidian-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-obsidian-border-light: rgba(255, 255, 255, 0.15);
+
+  --color-bg-base: #0a0a0c;
+  --color-bg-panel: #101014;
   --color-bg-panel-light: #F4F1EA;
-  --color-bg-panel-nested: #181A1D;
-  --color-border-terminal: #3A3D45;
+  --color-bg-panel-nested: #14141a;
+  --color-border-terminal: rgba(255, 255, 255, 0.1);
   --color-border-light: #D8D2C5;
 
-  /* Official Indian Government Tricolor Palette */
+  /* Sharp Industrial & Forensic Status Accents */
   --color-saffron: #FF9933;
   --color-saffron-hover: #E68524;
   --color-saffron-light: rgba(255, 153, 51, 0.12);
-  --color-india-green: #138808;
-  --color-india-green-hover: #0F6D06;
-  --color-india-green-light: rgba(19, 136, 8, 0.12);
+  --color-saffron-glow: rgba(255, 153, 51, 0.25);
+  
+  --color-india-green: #10B981;
+  --color-india-green-hover: #059669;
+  --color-india-green-light: rgba(16, 185, 129, 0.12);
+  --color-india-green-glow: rgba(16, 185, 129, 0.25);
+  
   --color-ashoka-navy: #000080;
+  --color-cyan-telemetry: #06B6D4;
+  --color-cyan-glow: rgba(6, 182, 212, 0.2);
 
   /* Status Colors */
-  --color-verified: #138808;
+  --color-verified: #10B981;
   --color-review: #FF9933;
-  --color-forged: #DC2626;
+  --color-forged: #EF4444;
 
   /* Typography */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: "Playfair Display", Georgia, "Libre Baskerville", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Brutalist Radii: Flat / Compact */
+  /* Brutalist Radii: Flat / Ultra-Compact */
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 4px;
@@ -40,7 +56,7 @@
 :root {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #FAF7F0;
-  background-color: #1C1E22;
+  background-color: #0a0a0c;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -52,13 +68,13 @@
 
 html {
   scroll-behavior: smooth;
-  background-color: #1C1E22;
+  background-color: #0a0a0c;
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background-color: #1C1E22;
+  background-color: #0a0a0c;
   color: #FAF7F0;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
@@ -83,41 +99,41 @@ textarea:focus-visible {
   outline-offset: 1px;
 }
 
-/* Command Center Terminals & Panels (NO DROP SHADOWS, NO GLASSMORPHISM) */
+/* Command Center Terminals & Panels */
 .terminal-panel {
-  background-color: #26282D;
-  border: 1px solid #3A3D45;
+  background-color: #101014;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none !important;
 }
 
 .terminal-panel-light {
   background-color: #F4F1EA;
   border: 1px solid #D8D2C5;
-  color: #1C1E22;
+  color: #12151A;
   box-shadow: none !important;
 }
 
 .terminal-panel-nested {
-  background-color: #181A1D;
-  border: 1px solid #3A3D45;
+  background-color: #14141a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Hairline Ribbons & Dividers */
 .terminal-hairline {
   height: 1px;
-  background-color: #3A3D45;
+  background-color: #23272F;
 }
 
 .tiranga-stripe {
-  height: 3px;
+  height: 2.5px;
   width: 100%;
-  background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%);
+  background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #10B981 66.66%, #10B981 100%);
 }
 
 .tiranga-stripe-subtle {
-  height: 2px;
+  height: 1.5px;
   width: 100%;
-  background: linear-gradient(90deg, #FF9933 0%, #FFFFFF 50%, #138808 100%);
+  background: linear-gradient(90deg, #FF9933 0%, #FFFFFF 50%, #10B981 100%);
 }
 
 /* Status & Command Badges */
@@ -132,15 +148,15 @@ textarea:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   border-radius: 2px;
-  border: 1px solid #3A3D45;
-  background: #181A1D;
+  border: 1px solid #23272F;
+  background: #181C22;
   color: #D1CEC7;
 }
 
 .command-badge-verified {
-  border-color: rgba(19, 136, 8, 0.6);
-  background: rgba(19, 136, 8, 0.14);
-  color: #4ADE80;
+  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.14);
+  color: #34D399;
 }
 
 .command-badge-review {
@@ -150,22 +166,22 @@ textarea:focus-visible {
 }
 
 .command-badge-forged {
-  border-color: rgba(220, 38, 38, 0.6);
-  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.14);
   color: #F87171;
 }
 
 /* Dropzone & Upload Target */
 .upload-dropzone {
-  min-height: 260px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem;
   border: 1px dashed #FF9933;
-  border-radius: 4px;
-  background-color: #26282D;
+  border-radius: 3px;
+  background-color: #12151A;
   transition: border-color 150ms ease, background-color 150ms ease;
   box-shadow: none !important;
 }
@@ -173,20 +189,20 @@ textarea:focus-visible {
 .upload-dropzone:hover,
 .upload-dropzone-active {
   border-color: #FFB057;
-  background-color: #2D3037;
+  background-color: #181C22;
 }
 
 .upload-dropzone-light {
   background-color: #F4F1EA;
   border: 1px dashed #FF9933;
-  color: #1C1E22;
+  color: #12151A;
 }
 
 .upload-dropzone-light:hover {
   background-color: #ECE7DC;
 }
 
-/* Dense Dossier Tables */
+/* Dense Dossier & Telemetry Tables */
 .dossier-table {
   width: 100%;
   border-collapse: collapse;
@@ -194,33 +210,118 @@ textarea:focus-visible {
 }
 
 .dossier-table th {
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.65rem;
   text-align: left;
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   color: #8C8F96;
-  border-bottom: 1px solid #3A3D45;
-  background: #181A1D;
+  border-bottom: 1px solid #23272F;
+  background: #101318;
 }
 
 .dossier-table td {
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   vertical-align: middle;
-  border-bottom: 1px solid #2F3238;
+  border-bottom: 1px solid #1D2128;
 }
 
 .dossier-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.025);
 }
 
-/* Micro-Ticker */
-.ticker-line {
+/* Cyber Forensic Loupe Canvas Grid */
+.cyber-canvas-grid {
+  background-image: 
+    linear-gradient(rgba(35, 39, 47, 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 39, 47, 0.35) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Reticle Crosshairs */
+.reticle-hairline-x {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 153, 51, 0.4);
+  pointer-events: none;
+}
+
+.reticle-hairline-y {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 153, 51, 0.4);
+  pointer-events: none;
+}
+
+/* Telemetry Micro-Pill */
+.telemetry-pill {
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.75rem;
-  line-height: 1.6;
+  font-size: 0.68rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 2px;
+  border: 1px solid #23272F;
+  background: #0B0D0F;
+  color: #9CA3AF;
+}
+
+/* Live Telemetry Pulse & Laser Scanline */
+@keyframes cyberPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.15);
+  }
+}
+
+.cyber-pulse-green {
+  animation: cyberPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes laserSweep {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 96%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.8;
+  }
+}
+
+.animate-laser-sweep {
+  animation: laserSweep 2.4s ease-in-out infinite;
+}
+
+/* Glowing Accents */
+.glow-amber {
+  box-shadow: 0 0 16px rgba(255, 153, 51, 0.22);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.22);
+}
+
+.glow-rose {
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.22);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.2);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -212,10 +212,12 @@ export function DocumentUploadPanel({
         </div>
       ) : stagedFile ? (
         /* 2. Staged File Confirmation with Cancel Option */
-        <div className="terminal-panel p-4 sm:p-5 border border-[#3A3D45] bg-[#26282D] text-[#FAF7F0]">
-          <div className="flex items-center justify-between border-b border-[#3A3D45] pb-3">
+        <div className="terminal-panel p-4 sm:p-5 border border-white/10 bg-[#101014] text-[#FAF7F0]">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
-              <span className="command-badge command-badge-verified">STAGED</span>
+              <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 font-bold text-[10px]">
+                STAGED
+              </span>
               <span className="font-mono text-xs font-semibold text-slate-300">
                 {t("staged_payload")}
               </span>
@@ -225,7 +227,7 @@ export function DocumentUploadPanel({
               variant="ghost"
               size="sm"
               onClick={handleCancelStaged}
-              className="text-red-400 hover:bg-red-950/40 hover:text-red-300 text-xs font-mono h-8 px-2.5"
+              className="text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 text-xs font-mono h-8 px-2.5"
             >
               <X className="mr-1 h-3.5 w-3.5" /> {t("discard")}
             </Button>
@@ -233,7 +235,7 @@ export function DocumentUploadPanel({
 
           <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-[110px_1fr] items-center">
             {stagedPreviewUrl ? (
-              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 overflow-hidden border border-[#3A3D45] bg-[#181A1D] flex items-center justify-center">
+              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 overflow-hidden border border-white/10 bg-[#0a0a0c] flex items-center justify-center">
                 <img
                   src={stagedPreviewUrl}
                   alt="Selected Document"
@@ -241,7 +243,7 @@ export function DocumentUploadPanel({
                 />
               </div>
             ) : (
-              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 border border-[#3A3D45] bg-[#181A1D] flex items-center justify-center text-slate-500">
+              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 border border-white/10 bg-[#0a0a0c] flex items-center justify-center text-slate-500">
                 <FileUp className="h-6 w-6 text-[#FF9933]" />
               </div>
             )}
@@ -269,7 +271,7 @@ export function DocumentUploadPanel({
                   variant="outline"
                   onClick={handleCancelStaged}
                   disabled={disabled}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[36px] border-[#3A3D45] bg-[#181A1D] text-slate-400 hover:text-white font-mono text-xs px-4 rounded-xs cursor-pointer"
+                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[36px] border-white/10 bg-[#121217] text-slate-400 hover:text-white font-mono text-xs px-4 rounded-xs cursor-pointer"
                 >
                   <Trash2 className="mr-1 h-3.5 w-3.5" /> {t("discard")}
                 </Button>
@@ -280,7 +282,7 @@ export function DocumentUploadPanel({
       ) : (
         /* 3. Default Upload Dropzone with Choose File & Camera Scan */
         <div
-          className={`upload-dropzone border border-[#3A3D45] bg-[#26282D] ${isDragging ? "!border-[#FF9933] !bg-[#2D3037]" : ""} ${
+          className={`upload-dropzone border border-white/10 bg-[#101014] ${isDragging ? "!border-[#FF9933] !bg-[#17171f]" : ""} ${
             disabled ? "pointer-events-none opacity-60" : ""
           }`}
           onDragEnter={(event) => {
@@ -330,7 +332,7 @@ export function DocumentUploadPanel({
               type="button"
               variant="outline"
               disabled={disabled}
-              className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] border-[#3A3D45] bg-[#181A1D] text-slate-300 hover:border-[#FF9933] hover:text-[#FF9933] font-mono text-xs px-4 rounded-xs transition-colors cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] border-white/10 bg-[#121217] text-slate-300 hover:border-[#FF9933] hover:text-[#FF9933] font-mono text-xs px-4 rounded-xs transition-colors cursor-pointer"
               onClick={startCamera}
             >
               <Camera className="mr-1.5 h-4 w-4 text-[#FF9933]" />
@@ -338,23 +340,23 @@ export function DocumentUploadPanel({
             </Button>
           </div>
 
-          <p className="mt-3 font-mono text-[10.5px] uppercase tracking-normal text-slate-500">
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-normal text-[#737380]">
             {t("upload_limits")}
           </p>
 
-          <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[11px] text-slate-400">
+          <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-slate-400">
             <span className="inline-flex items-center gap-1">
               <LockKeyhole className="h-3 w-3 text-[#FF9933]" /> {t("client_enclave")}
             </span>
-            <span className="text-[#3A3D45]">|</span>
+            <span className="text-white/10">|</span>
             <span className="inline-flex items-center gap-1">
-              <FileCheck2 className="h-3 w-3 text-[#138808]" /> {t("zero_disk")}
+              <FileCheck2 className="h-3 w-3 text-emerald-400" /> {t("zero_disk")}
             </span>
           </div>
 
           {/* Forensic Benchmark Specimen Chips */}
-          <div className="mt-4 border-t border-[#3A3D45] pt-3 w-full text-center">
-            <p className="font-mono text-[10.5px] uppercase tracking-normal text-slate-500 mb-2">
+          <div className="mt-4 border-t border-white/10 pt-3 w-full text-center">
+            <p className="font-mono text-[10px] uppercase tracking-normal text-[#737380] mb-2">
               {t("load_specimen")}:
             </p>
             <div className="flex flex-wrap justify-center gap-1.5">
@@ -369,8 +371,8 @@ export function DocumentUploadPanel({
                   href={`/report/${sample.id}`}
                   className={`font-mono text-[10.5px] px-2.5 py-1 min-h-[30px] flex items-center border rounded-xs transition-all ${
                     sample.tone === "verified"
-                      ? "border-[#138808]/40 bg-[#138808]/10 text-emerald-400 hover:bg-[#138808]/20"
-                      : "border-red-900/50 bg-red-950/30 text-red-400 hover:bg-red-900/40"
+                      ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/40"
+                      : "border-rose-900/50 bg-rose-950/30 text-rose-400 hover:bg-rose-900/40"
                   }`}
                 >
                   {sample.label}
@@ -383,7 +385,7 @@ export function DocumentUploadPanel({
 
       {error && (
         <p
-          className="mt-2 border border-red-900/60 bg-red-950/40 px-3 py-2 font-mono text-xs text-red-400"
+          className="mt-2 border border-rose-900/60 bg-rose-950/40 px-3 py-2 font-mono text-xs text-rose-400"
           role="alert"
         >
           Error: {error}

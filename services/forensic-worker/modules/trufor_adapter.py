@@ -7,7 +7,11 @@ from PIL import Image
 import numpy as np
 
 
-def run_trufor_analysis(image: Image.Image, raw_bytes: bytes = b"") -> dict[str, Any]:
+def run_trufor_analysis(
+    image: Image.Image,
+    raw_bytes: bytes = b"",
+    allow_fallback: bool | None = None,
+) -> dict[str, Any]:
     checkpoint_path = os.getenv("TRUFOR_CHECKPOINT")
 
     # If official checkpoint is specified and exists, attempt loading model
@@ -20,9 +24,12 @@ def run_trufor_analysis(image: Image.Image, raw_bytes: bytes = b"") -> dict[str,
         except Exception as exc:
             pass
 
-    # If checkpoint is not configured, inform the user clearly
-    # But allow test/mock inference when requested for evaluation pipelines or demo mode
-    allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1") or os.getenv("DEMO_FALLBACK_MODE", "false").lower() in ("true", "1")
+    # If checkpoint is not configured, determine if fallback or demo execution is enabled
+    if allow_fallback is not None:
+        allow_mock = allow_fallback or (os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1"))
+    else:
+        allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1") or os.getenv("DEMO_FALLBACK_MODE", "false").lower() in ("true", "1")
+
     if not checkpoint_path and not allow_mock:
         return {
             "checkName": "trufor_inference",

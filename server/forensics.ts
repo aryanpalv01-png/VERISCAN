@@ -32,8 +32,10 @@ export type ForensicAnalysis = {
   unconfiguredModules?: string[];
   dormantNeuralChecks?: string[];
   activeModulesCount?: number;
+  tierAHardOverride?: boolean;
   systemError?: string;
 };
+
 
 const editingSoftware = /(photoshop|gimp|canva|illustrator|affinity|pixelmator|after effects)/i;
 const allowedMimeTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
@@ -702,6 +704,11 @@ export async function runForensicAnalysis(input: ForensicInput): Promise<Forensi
           available: c.result !== "not_applicable",
           flaggedRegion: c.flagged_region || undefined,
         }));
+
+        const hasPixel = checks.some((c) => c.checkName === "pixel_worker_analysis");
+        if (!hasPixel) {
+          checks.push(...await callExternalPixelAdapter(input));
+        }
 
         const providers: Record<string, ForensicAnalysis["providers"][string]> = {
           local: "active",

@@ -44,6 +44,8 @@ export function createApp() {
         status: analysis.status,
         confidenceScore: analysis.score,
         score: analysis.score,
+        activeModulesCount: analysis.activeModulesCount ?? analysis.checks.filter((c) => c.result === "pass" || c.result === "flag").length,
+        tierAHardOverride: analysis.tierAHardOverride,
         checks: analysis.checks,
         extractedFields: analysis.extractedFields,
         comparisonFindings: analysis.comparisonFindings,

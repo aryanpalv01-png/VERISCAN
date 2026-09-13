@@ -1,17 +1,12 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DocumentUploadPanel } from "@/components/DocumentUploadPanel";
-import { PageHeader } from "@/components/common/PageHeader";
-import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { fileToBase64, writeLocalScan } from "@/lib/scanStore";
-import { analyzeDocumentDirectly, formatCheckName, VerificationDocument } from "@/lib/veriscan";
+import { analyzeDocumentDirectly, formatCheckName, getCheckCategory, VerificationDocument } from "@/lib/veriscan";
+
 import {
   ArrowLeft,
-  FileImage,
-  FileText,
-  LockKeyhole,
   ShieldCheck,
-  Building2,
   Terminal,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -84,14 +79,22 @@ export default function Verify() {
               explanation: c.explanation,
               flaggedRegion: c.flaggedRegion || c.flagged_region || undefined,
               provider: c.provider,
+              providerState: result.providerHealth?.[c.provider] || "healthy",
+              category: getCheckCategory({ name: c.checkName, id: c.checkName } as any),
+              weight: c.weight,
+              effectiveWeight: c.effectiveWeight,
             }));
+            const activeCount = typeof result.activeModulesCount === "number"
+              ? result.activeModulesCount
+              : checksList.filter((c: any) => c.result === "pass" || c.result === "flag").length;
             const newDoc: VerificationDocument = {
               id: String(result.id),
               filename: file.name,
               type: docType,
               uploadedAt: new Date().toISOString(),
               status: result.status,
-              score: result.confidenceScore,
+              score: result.confidenceScore ?? result.score ?? 0,
+              activeModulesCount: activeCount,
               fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
               mimeType: file.type || "image/jpeg",
               reference: result.referenceCode,
@@ -100,10 +103,12 @@ export default function Verify() {
               extractedFields: result.extractedFields,
               comparisonFindings: result.comparisonFindings,
               providerHealth: result.providerHealth,
+              summary: result.summary,
             };
             writeLocalScan(newDoc, userIdentifier);
             setLocation(`/scan/${result.id}`);
           },
+
         }
       );
     } catch {
@@ -118,149 +123,119 @@ export default function Verify() {
   };
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-5">
-      <PageHeader
-        categoryHindi="दस्तावेज़ सत्यापन"
-        categoryEnglish="INGESTION GATEWAY // SPECIMEN INTAKE"
-        title="Institutional Document Forensic Screening"
-        subtitle="Ingest an Indian citizen identity document or certificate for real-time multi-layered forensic inspection."
-        accountBadge={user?.email ? `VAULT: ${user.email}` : undefined}
-        actions={
-          <Link href="/dashboard">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 border-[#3A3D45] bg-[#1C1E22] text-[#D1CEC7] hover:bg-[#26282D] hover:text-[#FAF7F0] font-mono text-[11px]"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Dashboard
-            </Button>
-          </Link>
-        }
-      />
-
-      <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-        {/* Left Column: Security Protocol & Advisories */}
-        <div className="space-y-4 font-mono text-xs">
-          <div className="terminal-panel p-5">
-            <div className="flex items-center gap-2 pb-3 border-b border-[#3A3D45]">
-              <Terminal className="h-4 w-4 text-[#FF9933]" />
-              <h2 className="text-[10.5px] font-bold uppercase tracking-wider text-[#FAF7F0]">
-                Air-Gapped Inspection Protocols
-              </h2>
-            </div>
-
-            <div className="mt-4 space-y-3.5">
-              <InfoRow
-                icon={<ShieldCheck className="h-4 w-4 text-[#138808]" />}
-                title="Account-Scoped Vault"
-                body={`Screened payloads and cryptographic digests are strictly isolated to ${user?.email || "active account session"}.`}
-              />
-              <InfoRow
-                icon={<LockKeyhole className="h-4 w-4 text-[#FF9933]" />}
-                title="Volatile Memory Sandbox"
-                body="Processed in volatile memory buffer with immediate GC cycle discarding payload bytes post-compilation."
-              />
-              <InfoRow
-                icon={<Building2 className="h-4 w-4 text-[#FAF7F0]" />}
-                title="DPI-Calibrated Forensic Pipeline"
-                body="Deterministic Verhoeff math, 2048-bit UIDAI QR signatures, and Income Tax structural regex."
-              />
-            </div>
-          </div>
-
-          <div className="terminal-panel p-4 border border-[#3A3D45] bg-[#1C1E22]">
-            <p className="font-bold text-[#FAF7F0] mb-1 text-[11px]">
-              Examiner Guidance:
-            </p>
-            <p className="text-[10.5px] text-[#A09D95] leading-relaxed font-sans">
-              Ensure the entire document border is visible with sufficient contrast. Native PDF soft-copies automatically bypass sensor-grain noise tests to prevent false compression penalties.
-            </p>
-          </div>
+    <div className="mx-auto max-w-[1440px] space-y-3.5 py-2 sm:py-3 px-2 sm:px-4">
+      {/* Top Command Telemetry Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-2.5 text-xs font-mono">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-slate-300 hover:text-[#FF9933] transition-colors text-xs"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Return to Command Center</span>
+        </Link>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10.5px] text-slate-400">
+          <span>OPERATOR VAULT: <span className="text-white font-semibold">{user?.email || "SESSION"}</span></span>
+          <span className="text-white/20">|</span>
+          <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 text-[10px] font-bold">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 cyber-pulse-green" />
+            Air-Gapped Ingestion Active
+          </span>
         </div>
+      </div>
 
-        {/* Right Column: Document Intake Panel */}
-        <div className="terminal-panel p-5 sm:p-6">
-          <div className="mb-4 flex items-center justify-between border-b border-[#3A3D45] pb-3">
-            <div>
-              <span className="command-badge bg-[#FF9933]/15 text-[#FF9933] border-[#FF9933]/40 font-mono text-[10px]">
-                Intake Gateway
+      {/* Main Forensic Intake Grid: Left Upload, Right 11-Engine Preflight Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
+        {/* Left Column: Specimen Intake Dropzone */}
+        <div className="w-full space-y-3">
+          <div className="terminal-panel p-3.5 sm:p-4 border border-white/10 bg-[#101014]">
+            <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+              <div className="flex items-center gap-2">
+                <Terminal className="h-4 w-4 text-[#FF9933]" />
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
+                  Target Specimen Ingestion Node
+                </h2>
+              </div>
+              <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 text-[9.5px] font-bold">
+                Ready
               </span>
-              <h3 className="font-serif text-lg font-bold text-[#FAF7F0] mt-1">
-                Upload Target Specimen
-              </h3>
             </div>
-            <span className="command-badge bg-[#138808]/15 text-[#22C55E] border-[#138808]/40 font-mono text-[10px]">
-              Encrypted Stream
-            </span>
+
+            <DocumentUploadPanel disabled={createScan.isPending} onFile={handleFile} />
+
+            {uploadError && (
+              <p
+                className="mt-3 border border-rose-500/50 bg-rose-950/30 p-2 font-mono text-xs text-rose-300"
+                role="alert"
+              >
+                Ingestion fault: {uploadError}
+              </p>
+            )}
           </div>
+        </div>
 
-          <DocumentUploadPanel disabled={createScan.isPending} onFile={handleFile} />
+        {/* Right Column: 11 Forensic Pipeline Inspection Engines Preflight */}
+        <div className="w-full space-y-3">
+          <div className="terminal-panel p-3.5 sm:p-4 border border-white/10 bg-[#101014]">
+            <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-white">
+                  Forensic Pipeline Engines (11 Active)
+                </h2>
+              </div>
+              <span className="text-[10px] font-mono text-[#FF9933] font-semibold">
+                Autonomous Pipeline
+              </span>
+            </div>
 
-          {uploadError && (
-            <p
-              className="mt-3 border border-rose-500/50 bg-rose-950/30 p-2.5 font-mono text-xs text-rose-300"
-              role="alert"
-            >
-              Error: {uploadError}
-            </p>
-          )}
+            <div className="space-y-1.5 font-mono text-xs">
+              {[
+                { name: "Metadata & EXIF Inspection", sub: "EXIF Parser", desc: "Software tags, device fingerprints, timestamps" },
+                { name: "Verhoeff Dihedral Checksum", sub: "Algorithmic Math", desc: "Permutation group D5 matrix validation" },
+                { name: "UIDAI QR Digital Signature", sub: "Cryptographic RSA", desc: "2048-bit asymmetric RSA public key envelope" },
+                { name: "JPEG Error Level Analysis", sub: "Computer Vision", desc: "8x8 DCT resave frequency delta" },
+                { name: "Spatial Copy-Move / Clone", sub: "Keypoint Matching", desc: "SIFT/ORB spatial duplication detection" },
+                { name: "Screenshot & Moiré Noise", sub: "Sensor Analysis", desc: "Sensor variance and screen raster scanlines" },
+                { name: "OCR Typography Consistency", sub: "OCR Font Engine", desc: "Font glyph, baseline, and kerning metrics" },
+                { name: "AI-Generated Image / GAN", sub: "Neural Classifier", desc: "Diffusion & GAN synthetic artifact probe" },
+                { name: "TruFor Dense Feature Map", sub: "GPU Neural", desc: "RGB + Noiseprint spatial tampering localization" },
+                { name: "CAT-Net DCT Quantization", sub: "GPU Neural", desc: "Frequency-domain compression discrepancy" },
+                { name: "Subpixel Raster Analysis", sub: "Pixel Worker", desc: "Laplacian edge sharpness & resampling boundaries" },
+              ].map((engine, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-2 p-2 border border-white/5 bg-[#121217] hover:border-white/15 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-[10px] font-bold text-[#FF9933] shrink-0 w-4 text-center">
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-200 text-[11px] truncate">
+                        {engine.name}
+                      </div>
+                      <div className="text-[9.5px] text-[#737380] truncate">
+                        {engine.desc}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    <span className="text-[9px] text-[#9CA3AF] hidden sm:inline">
+                      {engine.sub}
+                    </span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 cyber-pulse-green" />
+                  </div>
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2.5 font-mono text-xs">
-            <FormatCard
-              icon={<FileText className="h-3.5 w-3.5 text-[#FF9933]" />}
-              label="Digital PDF"
-              detail="e-Aadhaar / e-PAN Softcopy"
-            />
-            <FormatCard
-              icon={<FileImage className="h-3.5 w-3.5 text-[#138808]" />}
-              label="Raster Image"
-              detail="JPG, PNG, WebP (≤15MB)"
-            />
+            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#737380]">
+              <span>PENALTY-SUBTRACTION FUSION ENGINE</span>
+              <span className="text-emerald-400 font-bold">100/100 INITIALIZED</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function InfoRow({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="flex gap-3">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#3A3D45] bg-[#1C1E22]">
-        {icon}
-      </span>
-      <div>
-        <p className="text-[11px] font-bold text-[#FAF7F0]">{title}</p>
-        <p className="mt-0.5 text-[10.5px] text-[#A09D95] leading-relaxed font-sans">{body}</p>
-      </div>
-    </div>
-  );
-}
-
-function FormatCard({
-  icon,
-  label,
-  detail,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  detail: string;
-}) {
-  return (
-    <div className="border border-[#3A3D45] bg-[#1C1E22] p-2.5">
-      <div className="flex items-center gap-1.5">
-        {icon}
-        <span className="text-[11px] font-bold text-[#FAF7F0]">{label}</span>
-      </div>
-      <p className="mt-0.5 text-[10px] text-[#A09D95]">{detail}</p>
     </div>
   );
 }

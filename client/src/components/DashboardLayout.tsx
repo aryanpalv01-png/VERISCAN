@@ -182,7 +182,7 @@ function DashboardLayoutContent({
   }, [isResizing, setSidebarWidth]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#1C1E22] text-[#FAF7F0]">
+    <div className="flex min-h-screen w-full flex-col bg-[#0a0a0c] text-[#FAF7F0]">
       {/* Official Government of India Top Masthead */}
       <GovMasthead theme="dark" />
 
@@ -191,39 +191,36 @@ function DashboardLayoutContent({
         <div ref={sidebarRef} className="relative">
           <Sidebar
             collapsible="icon"
-            className="border-r border-[#3A3D45] bg-[#1C1E22] text-[#FAF7F0]"
+            className="border-r border-white/10 bg-[#0c0c10] text-[#FAF7F0]"
             disableTransition={isResizing}
           >
-            <SidebarHeader className="h-16 justify-center border-b border-[#3A3D45] px-3 bg-[#1C1E22]">
-              <div className="flex items-center gap-3 px-2">
+            <SidebarHeader className="h-14 justify-center border-b border-white/10 px-3 bg-[#0c0c10]">
+              <div className="flex items-center gap-2.5 px-1.5">
                 <button
                   onClick={toggleSidebar}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#3A3D45] bg-[#26282D] text-[#D1CEC7] hover:border-[#FF9933] hover:text-[#FAF7F0] focus:outline-none transition-colors"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center border border-white/10 bg-[#121217] text-[#D1CEC7] hover:border-[#FF9933] hover:text-[#FAF7F0] focus:outline-none transition-colors"
                   aria-label="Toggle navigation"
                 >
-                  <PanelLeft className="h-4 w-4" />
+                  <PanelLeft className="h-3.5 w-3.5" />
                 </button>
                 {!isCollapsed && (
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="font-serif text-base font-bold tracking-tight text-[#FAF7F0]">
+                      <p className="font-mono text-sm font-bold tracking-tight text-[#FAF7F0]">
                         VeriScan
                       </p>
-                      <span className="command-badge bg-[#FF9933]/20 text-[#FF9933] border-[#FF9933]/50 text-[8px] font-bold">
+                      <span className="command-badge bg-[#FF9933]/15 text-[#FF9933] border-[#FF9933]/40 text-[8px] font-bold">
                         TERMINAL
                       </span>
                     </div>
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-[#A09D95]">
-                      राष्ट्रीय सत्यता नोड
-                    </p>
                   </div>
                 )}
               </div>
             </SidebarHeader>
 
-            <SidebarContent className="px-3 py-4 bg-[#1C1E22]">
-              <p className="font-mono text-[9.5px] uppercase tracking-wider mb-2.5 px-2 text-[#A09D95] group-data-[collapsible=icon]:hidden">
-                Navigation
+            <SidebarContent className="px-2.5 py-3 bg-[#0c0c10]">
+              <p className="font-mono text-[9px] uppercase tracking-wider mb-2 px-2 text-[#737380] group-data-[collapsible=icon]:hidden">
+                COMMAND DECK
               </p>
               <SidebarMenu className="gap-1 font-mono">
                 {menuItems.map((item) => {
@@ -236,10 +233,10 @@ function DashboardLayoutContent({
                         isActive={isActive}
                         onClick={() => setLocation(item.path)}
                         tooltip={item.label}
-                        className={`h-9 px-2.5 transition-all text-xs border ${
+                        className={`h-8 px-2.5 transition-all text-xs border ${
                           isActive
-                            ? "border-[#FF9933] bg-[#FF9933]/20 text-[#FAF7F0] font-bold"
-                            : "border-transparent text-[#A09D95] hover:bg-[#26282D] hover:text-[#FAF7F0] hover:border-[#3A3D45]"
+                            ? "border-[#FF9933] bg-[#FF9933]/15 text-[#FAF7F0] font-bold"
+                            : "border-transparent text-[#9CA3AF] hover:bg-[#121217] hover:text-[#FAF7F0] hover:border-white/10"
                         }`}
                       >
                         <item.icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} />
@@ -253,36 +250,36 @@ function DashboardLayoutContent({
               </SidebarMenu>
 
               {!isCollapsed && (
-                <div className="mt-auto px-2 pt-6">
-                  <div className="border border-[#3A3D45] bg-[#26282D] p-3 font-mono text-xs">
-                    <div className="flex items-center gap-1.5 text-[#138808]">
+                <div className="mt-auto px-1 pt-4">
+                  <div className="border border-white/10 bg-[#121217] p-2.5 font-mono text-xs">
+                    <div className="flex items-center gap-1.5 text-[#10B981]">
                       <ShieldCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                      <span className="text-[11px] font-bold text-[#FAF7F0]">
-                        Audit Isolation
+                      <span className="text-[10.5px] font-bold text-[#FAF7F0]">
+                        Evidentiary Node
                       </span>
                     </div>
-                    <p className="mt-1 text-[10px] leading-relaxed text-[#A09D95]">
-                      Local memory sandbox. Screened records are account-scoped.
+                    <p className="mt-1 text-[9.5px] leading-relaxed text-[#737380]">
+                      Statutory Sandbox · 11 Active Parameters
                     </p>
                   </div>
                 </div>
               )}
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-[#3A3D45] p-3 bg-[#1C1E22]">
+            <SidebarFooter className="border-t border-white/10 p-2.5 bg-[#0c0c10]">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex w-full items-center gap-2.5 p-1.5 text-left border border-transparent hover:border-[#3A3D45] hover:bg-[#26282D] transition-colors focus:outline-none group-data-[collapsible=icon]:justify-center font-mono">
-                    <Avatar className="h-7 w-7 border border-[#FF9933]/50 bg-[#1C1E22]">
-                      <AvatarFallback className="bg-[#FF9933]/20 text-[10px] font-bold text-[#FF9933]">
+                  <button className="flex w-full items-center gap-2 p-1 text-left border border-transparent hover:border-white/10 hover:bg-[#121217] transition-colors focus:outline-none group-data-[collapsible=icon]:justify-center font-mono">
+                    <Avatar className="h-6 w-6 border border-[#FF9933]/40 bg-[#0a0a0c]">
+                      <AvatarFallback className="bg-[#FF9933]/20 text-[9px] font-bold text-[#FF9933]">
                         {getInitials(user?.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                      <p className="truncate text-[11px] font-bold text-[#FAF7F0]">
+                      <p className="truncate text-[10.5px] font-bold text-[#FAF7F0]">
                         {user?.name || "OFFICER"}
                       </p>
-                      <p className="truncate font-mono text-[9.5px] text-[#A09D95]">
+                      <p className="truncate font-mono text-[9px] text-[#737380]">
                         {user?.email || "ACCOUNT"}
                       </p>
                     </div>
@@ -290,20 +287,20 @@ function DashboardLayoutContent({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 border border-[#3A3D45] bg-[#26282D] p-1 text-[#FAF7F0] font-mono shadow-none"
+                  className="w-56 border border-white/10 bg-[#121217] p-1 text-[#FAF7F0] font-mono shadow-none"
                 >
-                  <div className="border-b border-[#3A3D45] p-2 text-xs">
+                  <div className="border-b border-white/10 p-2 text-xs">
                     <p className="font-bold text-[#FAF7F0]">{user?.name}</p>
-                    <p className="truncate text-[10px] text-[#A09D95]">
+                    <p className="truncate text-[10px] text-[#737380]">
                       {user?.email}
                     </p>
-                    <span className="mt-1 inline-block command-badge bg-[#FF9933]/20 text-[#FF9933] border-[#FF9933] text-[9px]">
+                    <span className="mt-1 inline-block command-badge bg-[#FF9933]/20 text-[#FF9933] border-[#FF9933]/40 text-[9px]">
                       ROLE: {user?.role || "analyst"}
                     </span>
                   </div>
                   <DropdownMenuItem
                     onClick={() => logout()}
-                    className="cursor-pointer px-2 py-1.5 text-xs text-rose-400 hover:bg-[#1C1E22] focus:bg-[#1C1E22] focus:text-rose-300"
+                    className="cursor-pointer px-2 py-1.5 text-xs text-rose-400 hover:bg-[#0a0a0c] focus:bg-[#0a0a0c] focus:text-rose-300"
                   >
                     <LogOut className="mr-2 h-3.5 w-3.5" />
                     <span>Sign Out</span>
@@ -313,7 +310,7 @@ function DashboardLayoutContent({
             </SidebarFooter>
           </Sidebar>
           <div
-            className={`absolute right-0 top-0 z-50 h-full w-1 cursor-col-resize transition-colors hover:bg-[#FF9933] bg-[#3A3D45] ${
+            className={`absolute right-0 top-0 z-50 h-full w-1 cursor-col-resize transition-colors hover:bg-[#FF9933] bg-white/10 ${
               isCollapsed ? "hidden" : ""
             }`}
             onMouseDown={() => setIsResizing(true)}
@@ -321,17 +318,17 @@ function DashboardLayoutContent({
         </div>
 
         {/* Main Content Pane */}
-        <SidebarInset className="min-h-screen bg-[#1C1E22] text-[#FAF7F0]">
+        <SidebarInset className="min-h-screen bg-[#0a0a0c] text-[#FAF7F0]">
           {isMobile && (
-            <div className="sticky top-0 z-40 flex h-12 items-center gap-3 border-b border-[#3A3D45] bg-[#1C1E22] px-4 font-mono">
-              <SidebarTrigger className="h-8 w-8 border border-[#3A3D45] bg-[#26282D]" />
-              <span className="font-serif text-sm font-bold text-[#FAF7F0]">
+            <div className="sticky top-0 z-40 flex h-11 items-center gap-3 border-b border-white/10 bg-[#0a0a0c] px-3 font-mono">
+              <SidebarTrigger className="h-7 w-7 border border-white/10 bg-[#121217]" />
+              <span className="font-mono text-xs font-bold text-[#FAF7F0]">
                 {activeMenuItem.label}
               </span>
             </div>
           )}
-          <main className="p-3 sm:p-6 lg:p-7">
-            <div className="mx-auto max-w-[1440px]">{children}</div>
+          <main className="p-2 sm:p-4 lg:p-5">
+            <div className="mx-auto max-w-[1536px]">{children}</div>
           </main>
         </SidebarInset>
       </div>

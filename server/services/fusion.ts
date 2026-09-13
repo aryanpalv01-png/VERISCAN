@@ -26,6 +26,7 @@ export interface FusionResult {
 
 const MODULE_WEIGHTS: Record<string, number> = {
   checksum_identifier_validation: 3.5,
+  checksum_validation: 3.5,
   qr_signature_verification: 3.5,
   copy_move_clone_detection: 1.8,
   trufor_inference: 1.8,
@@ -48,6 +49,7 @@ const MODULE_WEIGHTS: Record<string, number> = {
  */
 export const DETERMINISTIC_TIER_A_CHECKS = new Set([
   "checksum_identifier_validation",
+  "checksum_validation",
   "qr_signature_verification",
 ]);
 

@@ -7,7 +7,11 @@ from PIL import Image
 import numpy as np
 
 
-def run_catnet_analysis(image: Image.Image, raw_bytes: bytes = b"") -> dict[str, Any]:
+def run_catnet_analysis(
+    image: Image.Image,
+    raw_bytes: bytes = b"",
+    allow_fallback: bool | None = None,
+) -> dict[str, Any]:
     checkpoint_path = os.getenv("CATNET_CHECKPOINT")
 
     # If official checkpoint is specified and exists, attempt loading model
@@ -18,7 +22,11 @@ def run_catnet_analysis(image: Image.Image, raw_bytes: bytes = b"") -> dict[str,
         except Exception:
             pass
 
-    allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1") or os.getenv("DEMO_FALLBACK_MODE", "false").lower() in ("true", "1")
+    if allow_fallback is not None:
+        allow_mock = allow_fallback or (os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1"))
+    else:
+        allow_mock = os.getenv("ALLOW_SYNTHETIC_MODEL_INFERENCE", "false").lower() in ("true", "1") or os.getenv("DEMO_FALLBACK_MODE", "false").lower() in ("true", "1")
+
     if not checkpoint_path and not allow_mock:
         return {
             "checkName": "catnet_inference",

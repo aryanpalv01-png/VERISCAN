@@ -5,6 +5,7 @@ from typing import Any, Final
 # Module baseline positive weight distribution
 CHECK_WEIGHTS: Final[dict[str, float]] = {
     "checksum_validation": 3.5,
+    "checksum_identifier_validation": 3.5,
     "qr_signature_verification": 3.0,
     "ocr_typography_consistency": 2.0,
     "trufor_inference": 2.0,
@@ -14,11 +15,13 @@ CHECK_WEIGHTS: Final[dict[str, float]] = {
     "metadata_exif_inspection": 1.5,
     "ai_generated_image_detector": 1.2,
     "screenshot_capture_detection": 1.0,
+    "pixel_worker_analysis": 1.0,
 }
 
 # Tier A Deterministic hard-override checks (Absolute Veto)
 DETERMINISTIC_CHECKS: Final[set[str]] = {
     "checksum_validation",
+    "checksum_identifier_validation",
     "qr_signature_verification",
 }
 
@@ -28,6 +31,7 @@ NEURAL_MODULE_CHECKS: Final[set[str]] = {
     "catnet_inference",
     "ai_generated_image_detector",
     "pixel_clone_worker",
+    "pixel_worker_analysis",
     "copy_move_clone_detection",
     "ocr_typography_consistency",
 }
@@ -93,6 +97,14 @@ class VeriScanScoringPipeline:
             return True
         if check.get("providerState") == "not_configured":
             return True
+
+        # Active check guard: if explicitly available with positive numerical confidence and pass/flag result,
+        # it is an ACTIVE check! (e.g. offline envelope verification or cached certificate fallback is an ACTIVE PASS)
+        if check.get("available") is True and isinstance(conf, (int, float)) and conf > 0 and result in ("pass", "flag"):
+            if any(sig in expl for sig in ("missing local weight", "weights missing", "checkpoint is not configured", "signal was excluded", "excluded from scoring", "503 service unavailable", "model weights missing")):
+                return True
+            return False
+
         if any(sig in expl for sig in DORMANT_SIGNATURES):
             return True
         return False

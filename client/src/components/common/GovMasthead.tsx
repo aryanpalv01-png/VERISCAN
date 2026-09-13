@@ -15,7 +15,7 @@ export function GovMasthead({ compact = false }: GovMastheadProps) {
       <div className="tiranga-stripe" />
 
       {/* Official Masthead Text Bar */}
-      <div className="px-3 sm:px-4 py-1.5 text-[11px] font-mono transition-colors bg-[#1C1E22] text-[#D1CEC7] border-b border-[#3A3D45]">
+      <div className="px-3 sm:px-4 py-1.5 text-[11px] font-mono transition-colors bg-[#0a0a0c] text-[#D1CEC7] border-b border-white/10">
         <div className="mx-auto flex max-w-[1520px] items-center justify-between gap-2">
           {/* Left: National Identity */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">

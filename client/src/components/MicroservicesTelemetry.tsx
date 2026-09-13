@@ -78,7 +78,7 @@ export function MicroservicesTelemetry({
       category: "Fast Branch",
       status: "online",
       latency: "68ms",
-      desc: "Pure-logic & CV modules: Verhoeff checksum, QR signature, EXIF, ELA, typography, clone, screenshot.",
+      desc: "Pure-logic & CV modules: Verhoeff checksum, QR signature, EXIF, ELA, typography, clone, screenshot, subpixel.",
       icon: <FastForward className="h-4 w-4" />,
     },
     {

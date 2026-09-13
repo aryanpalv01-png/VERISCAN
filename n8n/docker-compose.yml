@@ -1,0 +1,60 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: veriscan-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # --- System & Localization ---
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Asia/Kolkata}
+      - TZ=${TZ:-Asia/Kolkata}
+
+      # --- Security & Credentials ---
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_DISABLED=false
+
+      # --- Networking & Webhooks ---
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
+
+      # --- Execution Pruning & Payload Limits ---
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=50000
+      - N8N_PAYLOAD_SIZE_MAX=64
+
+      # --- Database Connection (Defaults to SQLite; optionally switch to PostgreSQL/Supabase) ---
+      - DB_TYPE=${DB_TYPE:-sqlite}
+      - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST:-}
+      - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT:-5432}
+      - DB_POSTGRESDB_DATABASE=${DB_POSTGRESDB_DATABASE:-}
+      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER:-}
+      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD:-}
+      - DB_POSTGRESDB_SCHEMA=${DB_POSTGRESDB_SCHEMA:-public}
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=${DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED:-true}
+
+      # --- VeriScan Pipeline Integrations ---
+      - LIGHTWEIGHT_URL=${LIGHTWEIGHT_URL:-http://host.docker.internal:8000}
+      - GPU_URL=${GPU_URL:-http://host.docker.internal:8000}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - HF_API_TOKEN=${HF_API_TOKEN:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./veriscan-orchestration.json:/backup/veriscan-orchestration.json:ro
+    extra_hosts:
+      # Enables n8n inside container to talk to local Python/FastAPI worker on host machine
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  n8n_data:
+    name: veriscan_n8n_data

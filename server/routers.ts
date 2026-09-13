@@ -146,12 +146,15 @@ export const appRouter = router({
         referenceCode,
         status: analysis.status,
         confidenceScore: analysis.score,
+        score: analysis.score,
+        activeModulesCount: analysis.activeModulesCount ?? analysis.checks.filter((c) => c.result === "pass" || c.result === "flag").length,
         checks: analysis.checks,
         extractedFields: analysis.extractedFields,
         comparisonFindings: analysis.comparisonFindings,
         providerHealth: analysis.providerHealth,
         summary: analysis.summary,
       };
+
     }),
     requestReview: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => requestDocumentReview(input.id, ctx.user.id)),
   }),

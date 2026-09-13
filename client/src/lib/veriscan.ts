@@ -19,7 +19,12 @@ export type VerificationCheck = {
   provider?: string;
   providerState?: string;
   category?: string;
+  weight?: number;
+  effectiveWeight?: number;
+  executionTimeMs?: number;
+  subsystem?: string;
 };
+
 
 export function getCheckCategory(check: VerificationCheck): string {
   if (check.category) return check.category;
@@ -49,8 +54,10 @@ export type VerificationDocument = {
   unconfiguredModules?: string[];
   dormantNeuralChecks?: string[];
   activeModulesCount?: number;
+  summary?: string;
   systemError?: string;
 };
+
 
 export const scanStages = [
   "Validating file",
@@ -637,6 +644,7 @@ export function serverDocumentToVerification(document: ServerDocumentRecord, che
     flaggedRegion: isRegion(check.flaggedRegion) ? check.flaggedRegion : undefined,
     provider: check.provider ?? undefined,
     providerState: check.providerState ?? undefined,
+    category: getCheckCategory({ name: check.checkName, id: check.checkName } as any),
   }));
 
   const executedCount = checks.filter((c) => c.result === "pass" || c.result === "flag").length;
@@ -652,6 +660,7 @@ export function serverDocumentToVerification(document: ServerDocumentRecord, che
     uploadedAt: new Date(document.uploadedAt).toISOString(),
     status,
     score,
+    activeModulesCount: executedCount,
     fileSize: `${Math.max(0.1, document.fileSize / 1024 / 1024).toFixed(1)} MB`,
     mimeType: document.mimeType,
     reference: document.referenceCode,
@@ -662,6 +671,7 @@ export function serverDocumentToVerification(document: ServerDocumentRecord, che
     systemError: (document as any).systemError || (document as any).system_error || (score === 0 && executedCount === 0 && checkRows.length > 0 ? "Pipeline execution failed to parse image buffers." : undefined),
     checks,
   };
+
 }
 
 export function formatDocumentType(type: DocumentKind) {
@@ -1169,7 +1179,16 @@ export async function analyzeDocumentDirectly(file: File): Promise<VerificationD
     confidence: c.confidence,
     explanation: c.explanation,
     flaggedRegion: c.flaggedRegion || c.flagged_region || undefined,
+    provider: c.provider,
+    providerState: c.providerState || (data.providerHealth && c.provider ? data.providerHealth[c.provider] : "healthy"),
+    category: getCheckCategory({ name: c.checkName, id: c.checkName } as any),
+    weight: typeof c.weight === "number" ? c.weight : 1.0,
+    effectiveWeight: typeof c.effectiveWeight === "number" ? c.effectiveWeight : (c.result === "not_applicable" ? 0 : 1.0),
   }));
+
+  const activeModulesCount = typeof data.activeModulesCount === "number"
+    ? data.activeModulesCount
+    : checks.filter((c) => c.result === "pass" || c.result === "flag").length;
 
   return {
     id,
@@ -1178,12 +1197,16 @@ export async function analyzeDocumentDirectly(file: File): Promise<VerificationD
     uploadedAt: new Date().toISOString(),
     status,
     score,
+    activeModulesCount,
     fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
     mimeType: file.type || "image/jpeg",
-    reference: `VS-${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+    reference: data.referenceCode || `VS-${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
     previewUrl: data.previewUrl || dataUrl,
-    checks: checks.length ? checks : demoDocuments[status === "likely_forged" ? 2 : status === "needs_review" ? 1 : 0].checks,
+    checks,
     extractedFields: data.extractedFields || data.extracted_fields,
     comparisonFindings: data.comparisonFindings,
+    providerHealth: data.providerHealth,
+    systemError: data.systemError,
   };
+
 }

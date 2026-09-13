@@ -1,7 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { AnomalyViewer, AnomalyItem } from "@/components/AnomalyViewer";
-import { DocumentPreview } from "@/components/DocumentPreview";
-import { ForensicLoupeCanvas } from "@/components/ForensicLoupeCanvas";
+import { ForensicSpecimenLoupe } from "@/components/ForensicSpecimenLoupe";
+import { ForensicParametersTable } from "@/components/ForensicParametersTable";
 import { ForensicPdfExport } from "@/components/ForensicPdfExport";
 import { MicroservicesTelemetry } from "@/components/MicroservicesTelemetry";
 import { Button } from "@/components/ui/button";
@@ -178,44 +177,44 @@ export default function Report() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-4 py-3 sm:py-4 px-2 sm:px-4">
+    <div className="mx-auto max-w-[1440px] space-y-3.5 py-2 sm:py-3 px-2 sm:px-4">
       {/* Top Navigation & Operational Actions Bar */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-[#3A3D45] pb-3 text-xs">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-2.5 text-xs font-mono">
         <Link
           href="/history"
-          className="inline-flex items-center gap-1.5 font-mono text-slate-300 hover:text-[#FF9933] transition-colors"
+          className="inline-flex items-center gap-1.5 text-slate-300 hover:text-[#FF9933] transition-colors text-xs"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>{t("audit_ledger")}</span>
+          <span>Audit Ledger</span>
         </Link>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
-            className="h-8 flex-1 sm:flex-none gap-1.5 border-[#3A3D45] bg-[#26282D] text-slate-300 hover:bg-[#3A3D45] hover:text-white font-mono text-[11px]"
+            className="h-7 flex-1 sm:flex-none gap-1.5 border-white/10 bg-[#121217] text-slate-300 hover:bg-[#17171f] hover:text-white font-mono text-[11px]"
             onClick={() => setShowTelemetry(!showTelemetry)}
           >
             <Activity className="h-3.5 w-3.5 text-[#FF9933]" />
-            {showTelemetry ? "Hide Architecture Flow" : "View Architecture Flow"}
+            {showTelemetry ? "Hide Telemetry" : "Telemetry Flow"}
           </Button>
 
           <Button
             variant="outline"
             size="sm"
-            className="h-8 flex-1 sm:flex-none gap-1.5 border-[#FF9933] bg-[#FF9933]/15 text-white hover:bg-[#FF9933]/25 font-mono text-[11px]"
+            className="h-7 flex-1 sm:flex-none gap-1.5 border-[#FF9933]/50 bg-[#FF9933]/15 text-white hover:bg-[#FF9933]/25 font-mono text-[11px] font-bold"
             onClick={() => setShowPdfModal(true)}
           >
             <Download className="h-3.5 w-3.5 text-[#FF9933]" />
             {t("export_pdf")}
           </Button>
 
-          <Link href="/verify" className="w-full sm:w-auto">
+          <Link href="/dashboard" className="w-full sm:w-auto">
             <Button
               size="sm"
-              className="h-8 w-full sm:w-auto gap-1.5 border border-[#3A3D45] bg-[#1C1E22] text-slate-300 hover:bg-[#26282D] hover:text-white font-mono text-[11px]"
+              className="h-7 w-full sm:w-auto gap-1.5 border border-white/10 bg-[#101014] text-slate-300 hover:bg-[#121217] hover:text-white font-mono text-[11px]"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              New Scan
+              New Specimen
             </Button>
           </Link>
         </div>
@@ -231,62 +230,9 @@ export default function Report() {
         </div>
       )}
 
-      {/* System Error: Pipeline Execution Failed to Parse Image Buffers */}
-      {(document.systemError || (document.score === 0 && passed.length + flagged.length === 0)) && (
-        <div className="border border-rose-500/70 bg-rose-950/40 p-4 font-mono text-xs text-rose-200">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
-            <div className="space-y-1.5 flex-1">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-bold text-rose-100 text-xs uppercase tracking-normal flex items-center gap-2">
-                  System Error: {document.systemError || "Pipeline execution failed to parse image buffers."}
-                  <span className="command-badge bg-rose-500/20 text-rose-300 border-rose-500/50 text-[9px] font-bold">
-                    ACTIVE CHECKS: 0
-                  </span>
-                </span>
-              </div>
-              <p className="text-[11.5px] text-rose-200 leading-relaxed font-sans">
-                {document.systemError || "Pipeline execution failed to parse image buffers."} None of the active forensic verification modules were able to decode raster pixels or parse metadata from the submitted payload.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Institutional Dormant Neural Modules Warning Advisory */}
-      {dormantNeuralChecks.length > 0 && (
-        <div className="border border-amber-500/50 bg-[#1E1B14] p-4 font-mono text-xs text-amber-200">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-[#FF9933] shrink-0 mt-0.5" />
-            <div className="space-y-1.5 flex-1">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-bold text-[#FAF7F0] text-xs uppercase tracking-normal flex items-center gap-2">
-                  Institutional Advisory: Secondary Neural Checks in Dormant / Fallback Mode
-                  <span className="command-badge bg-[#FF9933]/15 text-[#FF9933] border-[#FF9933]/40 text-[9px] font-bold">
-                    WEIGHT: 0.0 (EXCLUDED)
-                  </span>
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  ACTIVE PIPELINES: {passed.length + flagged.length} RUNNING
-                </span>
-              </div>
-              <p className="text-[11.5px] text-slate-300 leading-relaxed font-sans">
-                The following external or neural inference models are unconfigured or offline (missing local GPU weights / API credentials):{" "}
-                <strong className="text-[#FF9933] font-mono">
-                  {dormantNeuralChecks.map((c) => c.shortName || c.name || c.id).join(", ")}
-                </strong>.
-              </p>
-              <p className="text-[10.5px] text-slate-400 leading-relaxed font-mono border-t border-[#3A3D45]/60 pt-1.5">
-                Under Government of India evidentiary protocols, unconfigured modules are assigned a weight of 0 and excluded from the scoring denominator to prevent artificial neutral score dilution. The Tamper Confidence Score ({document.score}/100) is calculated strictly based on active modules that successfully executed.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Editorial Dossier Master Header (Verdict & Score at Top-Left) */}
-      <div className="terminal-panel p-4 sm:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4 sm:gap-6 items-start">
+      <div className="terminal-panel p-3.5 sm:p-4 border border-white/10 bg-[#101014]">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-3 sm:gap-5 items-start">
           {/* Top-Left: Large Serif Verdict + Score */}
           <div>
             <div className="flex items-center gap-2 font-mono text-[11px]">
@@ -298,13 +244,13 @@ export default function Report() {
               </span>
             </div>
 
-            <div className="mt-2.5 flex flex-wrap items-baseline gap-3 sm:gap-6">
-              {/* Huge Confidence Score */}
+            <div className="mt-2 flex flex-wrap items-baseline gap-3 sm:gap-5">
+              {/* Large Confidence Score */}
               <div className="flex items-baseline gap-1.5">
                 <span
-                  className={`font-serif text-4xl sm:text-6xl font-bold tracking-tight ${
+                  className={`font-mono text-3xl sm:text-5xl font-bold tracking-tight ${
                     meta.tone === "verified"
-                      ? "text-[#138808]"
+                      ? "text-emerald-400"
                       : meta.tone === "forged"
                       ? "text-rose-500"
                       : "text-[#FF9933]"
@@ -312,17 +258,17 @@ export default function Report() {
                 >
                   {document.score}
                 </span>
-                <span className="font-mono text-xs sm:text-base text-slate-400">
+                <span className="font-mono text-xs sm:text-sm text-slate-400">
                   / 100
                 </span>
               </div>
 
-              {/* Large Serif Verdict */}
-              <div className="border-l border-[#3A3D45] pl-3 sm:pl-5">
-                <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {meta.label.toUpperCase()}
+              {/* Large Verdict */}
+              <div className="border-l border-white/10 pl-3 sm:pl-4">
+                <h1 className="font-mono text-lg sm:text-xl font-bold tracking-tight text-white uppercase">
+                  {meta.label}
                 </h1>
-                <p className="font-mono text-[11px] text-slate-400 mt-0.5 uppercase tracking-normal">
+                <p className="font-mono text-[10px] text-slate-400 mt-0.5 uppercase tracking-normal">
                   Statutory Status: {document.status}
                 </p>
               </div>
@@ -330,26 +276,29 @@ export default function Report() {
           </div>
 
           {/* Top-Right: Telemetry Metadata Matrix */}
-          <div className="border border-[#3A3D45] bg-[#1C1E22] p-4 font-mono text-xs space-y-2">
-            <div className="flex items-center justify-between border-b border-[#3A3D45]/60 pb-1.5 text-[10.5px] text-slate-400">
+          <div className="border border-white/10 bg-[#121217] p-3 font-mono text-xs space-y-1.5">
+            <div className="flex items-center justify-between border-b border-white/10 pb-1 text-[10px] text-slate-400">
               <span className="font-semibold uppercase tracking-normal">Ledger Telemetry</span>
-              <span className="text-[#138808] font-bold">Cryptographically Sealed</span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Sealed
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px]">
               <div>
-                <span className="text-slate-400">Document Type:</span>
-                <p className="font-bold text-white">{formatDocumentType(document.type)}</p>
+                <span className="text-slate-400">Doc Type:</span>
+                <p className="font-bold text-white truncate">{formatDocumentType(document.type)}</p>
               </div>
               <div>
-                <span className="text-slate-400">Original Name:</span>
+                <span className="text-slate-400">Payload:</span>
                 <p className="font-bold text-white truncate">{document.filename}</p>
               </div>
               <div>
-                <span className="text-slate-400">Ingestion Time:</span>
-                <p className="font-bold text-white">{formatDateTime(document.uploadedAt)}</p>
+                <span className="text-slate-400">Screening Time:</span>
+                <p className="font-bold text-white truncate">{formatDateTime(document.uploadedAt)}</p>
               </div>
               <div>
-                <span className="text-slate-400">Security Vault:</span>
+                <span className="text-slate-400">Officer Vault:</span>
                 <p className="font-bold text-[#FF9933] truncate">{user?.email || "Authorized Officer"}</p>
               </div>
             </div>
@@ -357,19 +306,19 @@ export default function Report() {
         </div>
 
         {/* Global Score Progress Bar */}
-        <div className="mt-5 pt-4 border-t border-[#3A3D45]">
-          <div className="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-1.5">
-            <span>Evidence Risk Index (0 = Definite Forgery, 100 = Certified Genuine)</span>
+        <div className="mt-3 pt-2.5 border-t border-white/10">
+          <div className="flex items-center justify-between font-mono text-[10px] text-slate-400 mb-1">
+            <span>Evidence Risk Index (0 = Forgery, 100 = Certified Genuine)</span>
             <span className="font-bold text-white">Score: {document.score}%</span>
           </div>
-          <div className="h-1.5 w-full bg-[#1C1E22] border border-[#3A3D45]">
+          <div className="h-1.5 w-full bg-[#0a0a0c] border border-white/10">
             <div
               className={`h-full transition-all duration-500 ${
                 meta.tone === "verified"
-                  ? "bg-[#138808]"
+                  ? "bg-emerald-400 shadow-[0_0_10px_#10B981]"
                   : meta.tone === "forged"
-                  ? "bg-rose-500"
-                  : "bg-[#FF9933]"
+                  ? "bg-rose-500 shadow-[0_0_10px_#EF4444]"
+                  : "bg-[#FF9933] shadow-[0_0_10px_#FF9933]"
               }`}
               style={{ width: `${document.score}%` }}
             />
@@ -379,8 +328,8 @@ export default function Report() {
 
       {/* Extracted Citizen Demographics & Identity Matrix Panel */}
       {document.extractedFields && Object.keys(document.extractedFields).length > 0 && (
-        <div className="terminal-panel p-4 sm:p-5 border border-[#3A3D45] bg-[#1C1E22]">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3A3D45]/70 pb-2.5">
+        <div className="terminal-panel p-4 sm:p-5 border border-white/10 bg-[#121217]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
             <div className="flex items-center gap-2">
               <Fingerprint className="h-4 w-4 text-[#FF9933]" />
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
@@ -396,31 +345,31 @@ export default function Report() {
 
           <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
             {document.extractedFields.name && (
-              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Citizen Name</span>
                 <p className="font-bold text-white text-sm mt-0.5 truncate">{document.extractedFields.name}</p>
               </div>
             )}
             {document.extractedFields.aadhaar_number && (
-              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Aadhaar UID</span>
                 <p className="font-bold text-[#FF9933] text-sm mt-0.5 tracking-wider">{document.extractedFields.aadhaar_number}</p>
               </div>
             )}
             {document.extractedFields.pan_number && (
-              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">PAN Number</span>
                 <p className="font-bold text-[#FF9933] text-sm mt-0.5 tracking-wider">{document.extractedFields.pan_number}</p>
               </div>
             )}
             {document.extractedFields.dob && (
-              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Date of Birth</span>
                 <p className="font-bold text-white text-sm mt-0.5">{document.extractedFields.dob}</p>
               </div>
             )}
             {document.extractedFields.gender && (
-              <div className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gender</span>
                 <p className="font-bold text-white text-sm mt-0.5">{document.extractedFields.gender}</p>
               </div>
@@ -428,7 +377,7 @@ export default function Report() {
             {Object.entries(document.extractedFields)
               .filter(([k]) => !["name", "aadhaar_number", "pan_number", "dob", "gender", "raw_text"].includes(k))
               .map(([k, v]) => (
-                <div key={k} className="p-2.5 rounded border border-[#3A3D45] bg-[#26282D]">
+                <div key={k} className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider block">{k.replace(/_/g, " ")}</span>
                   <p className="font-bold text-white text-xs mt-0.5 truncate">{v}</p>
                 </div>
@@ -450,319 +399,94 @@ export default function Report() {
         </div>
       )}
 
-      {/* Split Dual-Pane Command Center Layout (50% Loupe / 50% Compliance Table) */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 items-start">
-        {/* ================= LEFT PANE (50%): DOCUMENT LOUPE ================= */}
-        <div className="space-y-4">
-          {/* Workbench Mode Selector Bar */}
-          <div className="flex items-center justify-between border-b border-[#3A3D45] pb-2 font-mono text-xs">
-            <span className="text-[11px] text-slate-400 uppercase tracking-normal font-semibold">
-              Forensic Specimen Visualizer
-            </span>
-            <div className="flex border border-[#3A3D45] bg-[#1C1E22]">
-              <button
-                onClick={() => setViewMode("anomalies")}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono transition-colors cursor-pointer ${
-                  viewMode === "anomalies"
-                    ? "bg-[#FF9933] text-slate-950 font-bold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Crosshair className="h-3 w-3" />
-                Bounding Boxes ({anomaliesList.length})
-              </button>
-              <button
-                onClick={() => setViewMode("canvas")}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono transition-colors border-l border-[#3A3D45] cursor-pointer ${
-                  viewMode === "canvas"
-                    ? "bg-[#FF9933] text-slate-950 font-bold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Layers className="h-3 w-3" />
-                Layer Canvas
-              </button>
-              <button
-                onClick={() => setViewMode("card")}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono transition-colors border-l border-[#3A3D45] cursor-pointer ${
-                  viewMode === "card"
-                    ? "bg-[#FF9933] text-slate-950 font-bold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <FileText className="h-3 w-3" />
-                Metadata Card
-              </button>
-            </div>
-          </div>
-
-          {/* Visualizer Workbench */}
-          {viewMode === "anomalies" ? (
-            <AnomalyViewer
-              imageUrl={document.previewUrl}
-              anomalies={anomaliesList}
-              title={`${formatDocumentType(document.type)} Forensic Loupe Inspection`}
-            />
-          ) : viewMode === "canvas" ? (
-            <ForensicLoupeCanvas
-              document={document}
-              onSelectCheck={(check) => setSelectedCheck(check)}
-            />
-          ) : (
-            <DocumentPreview document={document} />
-          )}
-
-          {/* Specimen Ingestion Record */}
-          <div className="terminal-panel p-4 font-mono text-xs">
-            <div className="flex items-center justify-between border-b border-[#3A3D45] pb-2 text-[11px] text-slate-400 uppercase tracking-normal">
-              <span className="flex items-center gap-1.5 font-semibold">
-                <Hash className="h-3.5 w-3.5 text-[#FF9933]" />
-                Cryptographic Digest Manifest
-              </span>
-              <span className="text-[#138808] font-bold">Immutable</span>
-            </div>
-            <div className="mt-2.5 space-y-2 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-slate-400">SHA-256 Digest:</span>
-                <span className="text-white font-bold">{document.reference}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Payload Size:</span>
-                <span className="text-white">{document.fileSize}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">MIME Format:</span>
-                <span className="text-white">{document.mimeType}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Screening Timestamp:</span>
-                <span className="text-white">{document.uploadedAt}</span>
-              </div>
-            </div>
-          </div>
+      {/* Split Dual-Pane Command Center Layout (Seamless 50/50 Loupe & 11 Parameters) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
+        {/* ================= LEFT PANE (50%): SPECIMEN LOUPE ================= */}
+        <div className="w-full">
+          <ForensicSpecimenLoupe
+            document={document}
+            selectedCheckId={selectedCheck?.id}
+            onSelectCheck={(check) => setSelectedCheck(check)}
+          />
         </div>
 
-        {/* ================= RIGHT PANE (50%): DENSE COMPLIANCE TABLE ================= */}
-        <div className="space-y-4">
-          {/* Table Controls & Filter Tabs */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3A3D45] pb-2 font-mono text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-400 uppercase tracking-normal font-semibold">
-                Forensic Checks ({document.checks.length})
-              </span>
-            </div>
+        {/* ================= RIGHT PANE (50%): 11 PARAMETERS TABLE ================= */}
+        <div className="w-full space-y-3">
+          <ForensicParametersTable
+            document={document}
+            selectedCheckId={selectedCheck?.id}
+            onSelectParam={(_, matched) => setSelectedCheck(matched || null)}
+          />
 
-            {/* Category Filter Chips */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {["all", "flagged", "pass", "deterministic", "visual"].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-2 py-0.5 font-mono text-[10.5px] uppercase transition-colors border cursor-pointer ${
-                    categoryFilter === cat
-                      ? "border-[#FF9933] bg-[#FF9933]/20 text-[#FFB057] font-bold"
-                      : "border-[#3A3D45] bg-[#1C1E22] text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* DENSE COMPLIANCE DATA TABLE */}
-          <div className="terminal-panel overflow-x-auto">
-            <table className="dossier-table w-full text-left font-mono text-xs">
-              <thead>
-                <tr>
-                  <th className="py-2.5 px-3">{t("col_file")}</th>
-                  <th className="py-2.5 px-3">Layer</th>
-                  <th className="py-2.5 px-3">{t("col_status")}</th>
-                  <th className="py-2.5 px-3 text-right">{t("col_score")}</th>
-                  <th className="py-2.5 px-3">{t("col_observation")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredChecks.map((check) => {
-                  const isSelected = selectedCheck?.id === check.id;
-                  const isFlag = check.result === "flag";
-                  const isPass = check.result === "pass";
-
-                  return (
-                    <tr
-                      key={check.id}
-                      onClick={() => setSelectedCheck(isSelected ? null : check)}
-                      className={`cursor-pointer transition-colors ${
-                        isSelected
-                          ? "bg-[#FF9933]/15"
-                          : isFlag
-                          ? "bg-rose-950/20 hover:bg-rose-950/30"
-                          : "hover:bg-[#1C1E22]"
-                      }`}
-                    >
-                      <td className="py-2.5 px-3 font-bold text-white whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          {isFlag && <AlertTriangle className="h-3.5 w-3.5 text-rose-500 shrink-0" />}
-                          {isPass && <ShieldCheck className="h-3.5 w-3.5 text-[#138808] shrink-0" />}
-                          {!isFlag && !isPass && <HelpCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
-                          <span>{check.shortName || check.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 text-[10.5px] text-slate-400 uppercase whitespace-nowrap">
-                        {getCheckCategory(check).toUpperCase()}
-                      </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        {isPass ? (
-                          <span className="command-badge command-badge-verified font-bold text-[10px]">
-                            Pass
-                          </span>
-                        ) : isFlag ? (
-                          <span className="command-badge command-badge-forged font-bold text-[10px]">
-                            Flag
-                          </span>
-                        ) : (
-                          <span className="command-badge bg-[#1C1E22] text-slate-400 border-[#3A3D45] text-[10px]">
-                            N/A (Weight 0)
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-white whitespace-nowrap">
-                        {check.result === "not_applicable" ? (
-                          <span className="text-slate-500 font-normal">-- (0.0)</span>
-                        ) : (
-                          `${check.confidence}%`
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-[11px] text-slate-300 max-w-xs truncate">
-                        {check.explanation}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {/* Table Summary Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#3A3D45] p-3 font-mono text-[11px] text-slate-400 bg-[#1C1E22]">
-              <div className="flex items-center gap-4">
-                <span>
-                  Passed: <strong className="text-[#138808]">{passed.length}</strong>
-                </span>
-                <span>
-                  Flagged: <strong className="text-rose-400">{flagged.length}</strong>
-                </span>
-                <span>
-                  Not Applicable (Weight 0): <strong className="text-white">{notApplicable.length}</strong>
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-400">
-                Active Checks: {passed.length + flagged.length} / {document.checks.length}
-              </span>
-            </div>
-          </div>
-
-          {/* Selected Check Inspection Detail Drawer */}
-          {selectedCheck && (
-            <div className="terminal-panel p-4 border border-[#FF9933] bg-[#1C1E22] text-xs font-mono animate-in fade-in">
-              <div className="flex items-start justify-between gap-3 border-b border-[#3A3D45] pb-2">
-                <div>
-                  <span className="text-[10.5px] text-[#FF9933] uppercase font-bold">
-                    Check Detail: {selectedCheck.id}
-                  </span>
-                  <h3 className="font-serif text-sm font-bold text-white mt-0.5">
-                    {selectedCheck.name}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedCheck(null)}
-                  className="text-slate-400 hover:text-white font-bold cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-
-              <div className="mt-3 space-y-2 text-[11px]">
-                <p className="text-white font-sans leading-relaxed">
-                  {selectedCheck.explanation}
-                </p>
-
-                {selectedCheck.result === "not_applicable" && (
-                  <div className="p-2 border border-[#3A3D45] bg-[#26282D] text-slate-300">
-                    <span className="text-[#FF9933] font-bold">Contextual Justification: </span>
-                    <span>{getNARationale(selectedCheck, document)}</span>
-                  </div>
-                )}
-
-                {selectedCheck.flaggedRegion && (
-                  <div className="flex items-center gap-2 text-[10.5px] text-amber-400">
-                    <Crosshair className="h-3.5 w-3.5" />
-                    <span>
-                      Flagged Coordinates: ({selectedCheck.flaggedRegion.x}%, {selectedCheck.flaggedRegion.y}%)
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Action Decision Block: Human Review vs Archive */}
-          <div className="terminal-panel p-4 sm:p-5 space-y-3">
+          {/* Institutional Disposition Action Card */}
+          <div className="terminal-panel p-3.5 font-mono text-xs border border-white/10 bg-[#101014] space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-mono text-[10.5px] text-slate-400 uppercase">
+              <div className="flex items-center gap-1.5 text-[9.5px] text-[#737380] uppercase">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#FF9933]" />
                 Institutional Disposition
               </div>
-              <span className="font-mono text-[10.5px] text-[#FF9933] font-semibold">
+              <span className="text-[9.5px] text-[#FF9933] font-semibold">
                 {flagged.length ? "Action Required" : "Archive Ready"}
               </span>
             </div>
 
-            <h3 className="font-serif text-base font-bold text-white">
+            <h3 className="font-mono text-xs font-bold text-white">
               {flagged.length
                 ? "Discrepancy Action: Queue Human Forensic Verification"
                 : "Disposition: Retain in Institutional Compliance Ledger"}
             </h3>
 
-            <div className="pt-1">
+            <div className="pt-1 flex flex-wrap items-center gap-2">
               {flagged.length ? (
                 <Button
                   onClick={handleReview}
                   disabled={hasReview || reviewMutation.isPending}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] border border-[#FF9933] bg-[#FF9933] text-slate-950 hover:bg-[#E68524] font-mono text-xs px-5 font-bold cursor-pointer shadow-xs"
+                  className="w-full sm:w-auto h-8 border border-[#FF9933] bg-[#FF9933] text-slate-950 hover:bg-[#E68524] font-mono text-xs px-4 font-bold cursor-pointer"
                 >
                   {hasReview
                     ? "Review Queued"
                     : reviewMutation.isPending
                     ? "Transmitting…"
                     : t("req_human_review")}
-                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               ) : (
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] border border-[#3A3D45] bg-[#1C1E22] text-white hover:bg-[#26282D] font-mono text-xs px-4 cursor-pointer"
+                  className="w-full sm:w-auto h-8 border border-white/10 bg-[#121217] text-white hover:bg-[#17171f] font-mono text-xs px-3.5 cursor-pointer"
                   onClick={() =>
                     toast.info("Reference Hash Copied", {
                       description: document.reference,
                     })
                   }
                 >
-                  <LockKeyhole className="mr-2 h-3.5 w-3.5 text-[#FF9933]" />
+                  <LockKeyhole className="mr-1.5 h-3.5 w-3.5 text-[#FF9933]" />
                   {t("copy_hash")}
                 </Button>
               )}
+
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto h-8 border border-[#FF9933]/50 bg-[#FF9933]/15 text-[#FFB057] hover:bg-[#FF9933]/25 font-mono text-xs px-3.5 cursor-pointer font-bold"
+                onClick={() => setShowPdfModal(true)}
+              >
+                <Download className="mr-1.5 h-3.5 w-3.5 text-[#FF9933]" />
+                {t("export_pdf")}
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Regulatory & Institutional Footnote */}
-      <div className="border border-[#3A3D45] bg-[#1C1E22] px-4 py-3 font-mono text-[11px] text-slate-400 flex items-center gap-2">
-        <HelpCircle className="h-4 w-4 shrink-0 text-[#FF9933]" />
-        <span>
-          STATUTORY COMPLIANCE NOTICE: VeriScan operates strictly via independent algorithmic analysis, local neural
-          weight inference, and mathematical checksums. It does NOT connect to live government databases.
-        </span>
+      <div className="border border-white/10 bg-[#101014] px-3 py-2 font-mono text-[10px] text-slate-400 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <HelpCircle className="h-3.5 w-3.5 shrink-0 text-[#FF9933]" />
+          <span>
+            STATUTORY COMPLIANCE NOTICE: Algorithmic cryptographic inspection node. Evidentiary records sealed in volatile sandbox.
+          </span>
+        </div>
+        <span className="text-emerald-400 font-bold hidden sm:inline">VERISCAN PROD</span>
       </div>
 
       {/* Forensic Certificate Modal (Print-ready PDF) */}
