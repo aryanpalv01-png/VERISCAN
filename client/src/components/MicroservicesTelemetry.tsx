@@ -120,37 +120,37 @@ export function MicroservicesTelemetry({
   ];
 
   return (
-    <div className="terminal-panel p-5 sm:p-6">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs text-slate-900">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#3A3D45] pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center border border-[#3A3D45] bg-[#1C1E22] text-[#FF9933]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600 shadow-xs">
             <Activity className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-serif text-sm font-bold text-[#FAF7F0]">
-                Microservices Distributed Architecture Telemetry
+              <h3 className="text-sm font-bold text-slate-900">
+                Distributed Architecture Telemetry
               </h3>
-              <span className="command-badge bg-[#FF9933]/15 text-[#FF9933] border-[#FF9933]/40">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 LIVE MESH
               </span>
             </div>
-            <p className="font-mono text-[10.5px] text-[#A09D95]">
-              n8n Orchestration Layer · Fast, GPU & External API Inference Branches
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Multi-Branch Orchestration Layer · Fast, GPU & External Verification Pipelines
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs text-[#A09D95]">
-          <span>TOPOLOGY STATUS:</span>
-          <span className="command-badge bg-[#138808]/15 text-[#22C55E] border-[#138808]/40 flex items-center gap-1">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span>STATUS:</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <CheckCircle2 className="h-3 w-3" /> ALL 9 NODES NOMINAL
           </span>
         </div>
       </div>
 
-      {/* Interactive Microservices Architecture Grid / Diagram */}
+      {/* Interactive Microservices Architecture Grid */}
       <div className="mt-4 grid gap-2.5 sm:grid-cols-3 lg:grid-cols-3">
         {nodes.map((node, index) => {
           const isPulsing = pulseIndex === index;
@@ -160,55 +160,55 @@ export function MicroservicesTelemetry({
             <div
               key={node.id}
               onClick={() => setSelectedNode(isSelected ? null : node.id)}
-              className={`group relative border p-3 transition-all cursor-pointer ${
+              className={`group relative rounded-xl border p-3 transition-all cursor-pointer ${
                 isSelected
-                  ? "border-[#FF9933] bg-[#FF9933]/10"
+                  ? "border-indigo-600 bg-indigo-50/50 shadow-xs"
                   : isPulsing
-                  ? "border-[#FF9933]/70 bg-[#1C1E22]"
-                  : "border-[#3A3D45] bg-[#1C1E22] hover:border-[#FF9933]/50"
+                  ? "border-indigo-300 bg-indigo-50/20"
+                  : "border-slate-200/80 bg-white hover:border-indigo-300 hover:shadow-xs"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`flex h-7 w-7 items-center justify-center border transition-colors ${
+                    className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${
                       isPulsing || isSelected
-                        ? "border-[#FF9933] bg-[#FF9933]/20 text-[#FAF7F0]"
-                        : "border-[#3A3D45] bg-[#26282D] text-[#A09D95]"
+                        ? "border-indigo-200 bg-indigo-100 text-indigo-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600"
                     }`}
                   >
                     {node.icon}
                   </div>
                   <div>
-                    <p className="font-mono text-[9.5px] font-bold text-[#A09D95] uppercase">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       {node.category}
                     </p>
-                    <h4 className="font-mono text-xs font-bold text-[#FAF7F0] leading-tight">
+                    <h4 className="text-xs font-bold text-slate-900 leading-tight">
                       {node.title}
                     </h4>
                   </div>
                 </div>
 
-                <span className="font-mono text-[10px] text-[#FF9933] bg-[#26282D] px-1.5 py-0.5 border border-[#3A3D45]">
+                <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100">
                   {node.latency}
                 </span>
               </div>
 
-              <p className="mt-2 text-[11px] leading-relaxed text-[#A09D95] line-clamp-2">
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500 line-clamp-2">
                 {node.desc}
               </p>
 
               {/* Data packet flow indicator */}
-              <div className="mt-2.5 flex items-center justify-between border-t border-[#3A3D45] pt-1.5 font-mono text-[10px]">
-                <span className="flex items-center gap-1.5 text-[#A09D95]">
+              <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-1.5 text-[10.5px]">
+                <span className="flex items-center gap-1.5 text-slate-500">
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      isPulsing ? "bg-[#FF9933] animate-pulse" : "bg-[#138808]"
+                      isPulsing ? "bg-indigo-600 animate-pulse" : "bg-emerald-500"
                     }`}
                   />
                   {node.status.toUpperCase()}
                 </span>
-                <span className="text-[10px] text-[#FF9933] font-semibold group-hover:underline">
+                <span className="text-[10px] text-indigo-600 font-semibold group-hover:underline">
                   Inspect
                 </span>
               </div>
@@ -219,23 +219,23 @@ export function MicroservicesTelemetry({
 
       {/* Selected Node Expanded Detail Drawer */}
       {selectedNode && (
-        <div className="mt-3 border border-[#FF9933] bg-[#1C1E22] p-3.5 text-xs">
+        <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-xs">
           {(() => {
             const active = nodes.find((n) => n.id === selectedNode)!;
             return (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#FAF7F0] text-xs">{active.title}</span>
-                    <span className="bg-[#26282D] text-[#FF9933] px-2 py-0.5 border border-[#3A3D45] text-[10px]">
+                    <span className="font-bold text-slate-900 text-xs">{active.title}</span>
+                    <span className="bg-white text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200 text-[10px] font-semibold">
                       {active.category}
                     </span>
                   </div>
-                  <p className="mt-1 text-[#A09D95] font-sans text-xs">{active.desc}</p>
+                  <p className="mt-1 text-slate-600 text-xs">{active.desc}</p>
                 </div>
                 <button
                   onClick={() => setSelectedNode(null)}
-                  className="self-end sm:self-center text-[#A09D95] hover:text-[#FAF7F0] font-bold text-xs"
+                  className="self-end sm:self-center text-slate-500 hover:text-slate-900 font-semibold text-xs cursor-pointer"
                 >
                   Close
                 </button>

@@ -201,19 +201,19 @@ export default function Report() {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 flex-1 sm:flex-none gap-1.5 border-[#FF9933]/50 bg-[#FF9933]/15 text-white hover:bg-[#FF9933]/25 font-mono text-[11px] font-bold"
+            className="h-8 flex-1 sm:flex-none gap-1.5 border-indigo-200 bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold rounded-lg shadow-xs"
             onClick={() => setShowPdfModal(true)}
           >
-            <Download className="h-3.5 w-3.5 text-[#FF9933]" />
+            <Download className="h-3.5 w-3.5 text-indigo-600" />
             {t("export_pdf")}
           </Button>
 
           <Link href="/dashboard" className="w-full sm:w-auto">
             <Button
               size="sm"
-              className="h-7 w-full sm:w-auto gap-1.5 border border-white/10 bg-[#101014] text-slate-300 hover:bg-[#121217] hover:text-white font-mono text-[11px]"
+              className="h-8 w-full sm:w-auto gap-1.5 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-lg shadow-xs"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
               New Specimen
             </Button>
           </Link>
@@ -231,94 +231,94 @@ export default function Report() {
       )}
 
       {/* Editorial Dossier Master Header (Verdict & Score at Top-Left) */}
-      <div className="terminal-panel p-3.5 sm:p-4 border border-white/10 bg-[#101014]">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-3 sm:gap-5 items-start">
-          {/* Top-Left: Large Serif Verdict + Score */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs text-slate-900">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4 sm:gap-6 items-start">
+          {/* Top-Left: Large Verdict + Score */}
           <div>
-            <div className="flex items-center gap-2 font-mono text-[11px]">
-              <span className="command-badge bg-[#FF9933]/15 text-[#FFB057] border-[#FF9933]/40 font-bold">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {t("confidence_score")}
               </span>
-              <span className="text-slate-400 truncate">
-                Ref: <strong className="text-white">{document.reference}</strong>
+              <span className="text-slate-500 truncate text-xs font-sans">
+                Ref: <strong className="text-slate-900">{document.reference}</strong>
               </span>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-baseline gap-3 sm:gap-5">
+            <div className="mt-2.5 flex flex-wrap items-baseline gap-4 sm:gap-6">
               {/* Large Confidence Score */}
               <div className="flex items-baseline gap-1.5">
                 <span
-                  className={`font-mono text-3xl sm:text-5xl font-bold tracking-tight ${
+                  className={`text-4xl sm:text-5xl font-extrabold tracking-tight ${
                     meta.tone === "verified"
-                      ? "text-emerald-400"
+                      ? "text-emerald-600"
                       : meta.tone === "forged"
-                      ? "text-rose-500"
-                      : "text-[#FF9933]"
+                      ? "text-rose-600"
+                      : "text-amber-600"
                   }`}
                 >
                   {document.score}
                 </span>
-                <span className="font-mono text-xs sm:text-sm text-slate-400">
+                <span className="text-sm font-semibold text-slate-400">
                   / 100
                 </span>
               </div>
 
               {/* Large Verdict */}
-              <div className="border-l border-white/10 pl-3 sm:pl-4">
-                <h1 className="font-mono text-lg sm:text-xl font-bold tracking-tight text-white uppercase">
+              <div className="border-l border-slate-200 pl-4">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
                   {meta.label}
                 </h1>
-                <p className="font-mono text-[10px] text-slate-400 mt-0.5 uppercase tracking-normal">
-                  Statutory Status: {document.status}
+                <p className="text-[11px] text-slate-500 mt-0.5 uppercase tracking-wider font-semibold">
+                  Status: {document.status}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Top-Right: Telemetry Metadata Matrix */}
-          <div className="border border-white/10 bg-[#121217] p-3 font-mono text-xs space-y-1.5">
-            <div className="flex items-center justify-between border-b border-white/10 pb-1 text-[10px] text-slate-400">
-              <span className="font-semibold uppercase tracking-normal">Ledger Telemetry</span>
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs space-y-1.5">
+            <div className="flex items-center justify-between border-b border-slate-200/70 pb-1 text-[10.5px] text-slate-500">
+              <span className="font-bold uppercase tracking-wider">Ledger Telemetry</span>
+              <span className="text-emerald-700 font-bold flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Sealed
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px]">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
               <div>
-                <span className="text-slate-400">Doc Type:</span>
-                <p className="font-bold text-white truncate">{formatDocumentType(document.type)}</p>
+                <span className="text-slate-500">Doc Type:</span>
+                <p className="font-semibold text-slate-800 truncate">{formatDocumentType(document.type)}</p>
               </div>
               <div>
-                <span className="text-slate-400">Payload:</span>
-                <p className="font-bold text-white truncate">{document.filename}</p>
+                <span className="text-slate-500">Payload:</span>
+                <p className="font-semibold text-slate-800 truncate">{document.filename}</p>
               </div>
               <div>
-                <span className="text-slate-400">Screening Time:</span>
-                <p className="font-bold text-white truncate">{formatDateTime(document.uploadedAt)}</p>
+                <span className="text-slate-500">Screening Time:</span>
+                <p className="font-semibold text-slate-800 truncate">{formatDateTime(document.uploadedAt)}</p>
               </div>
               <div>
-                <span className="text-slate-400">Officer Vault:</span>
-                <p className="font-bold text-[#FF9933] truncate">{user?.email || "Authorized Officer"}</p>
+                <span className="text-slate-500">Officer:</span>
+                <p className="font-semibold text-indigo-700 truncate">{user?.email || "Authorized Officer"}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Global Score Progress Bar */}
-        <div className="mt-3 pt-2.5 border-t border-white/10">
-          <div className="flex items-center justify-between font-mono text-[10px] text-slate-400 mb-1">
-            <span>Evidence Risk Index (0 = Forgery, 100 = Certified Genuine)</span>
-            <span className="font-bold text-white">Score: {document.score}%</span>
+        <div className="mt-4 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1.5">
+            <span>Evidence Index</span>
+            <span className="font-bold text-slate-900">Score: {document.score}%</span>
           </div>
-          <div className="h-1.5 w-full bg-[#0a0a0c] border border-white/10">
+          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
             <div
               className={`h-full transition-all duration-500 ${
                 meta.tone === "verified"
-                  ? "bg-emerald-400 shadow-[0_0_10px_#10B981]"
+                  ? "bg-emerald-500"
                   : meta.tone === "forged"
-                  ? "bg-rose-500 shadow-[0_0_10px_#EF4444]"
-                  : "bg-[#FF9933] shadow-[0_0_10px_#FF9933]"
+                  ? "bg-rose-500"
+                  : "bg-amber-500"
               }`}
               style={{ width: `${document.score}%` }}
             />
@@ -328,68 +328,68 @@ export default function Report() {
 
       {/* Extracted Citizen Demographics & Identity Matrix Panel */}
       {document.extractedFields && Object.keys(document.extractedFields).length > 0 && (
-        <div className="terminal-panel p-4 sm:p-5 border border-white/10 bg-[#121217]">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs text-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
-              <Fingerprint className="h-4 w-4 text-[#FF9933]" />
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                Extracted Citizen Demographics & Identity Matrix
+              <Fingerprint className="h-4 w-4 text-indigo-600" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                Extracted Demographics & Identity Matrix
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="command-badge bg-[#138808]/15 text-[#138808] border-[#138808]/30 text-[10px] font-bold">
-                RapidOCR / Tesseract Neural Ingestion
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Neural Ingestion
               </span>
             </div>
           </div>
 
-          <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+          <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
             {document.extractedFields.name && (
-              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Citizen Name</span>
-                <p className="font-bold text-white text-sm mt-0.5 truncate">{document.extractedFields.name}</p>
+              <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Name</span>
+                <p className="font-bold text-slate-900 text-sm mt-0.5 truncate">{document.extractedFields.name}</p>
               </div>
             )}
             {document.extractedFields.aadhaar_number && (
-              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Aadhaar UID</span>
-                <p className="font-bold text-[#FF9933] text-sm mt-0.5 tracking-wider">{document.extractedFields.aadhaar_number}</p>
+              <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Aadhaar UID</span>
+                <p className="font-bold text-indigo-700 text-sm mt-0.5 tracking-wider">{document.extractedFields.aadhaar_number}</p>
               </div>
             )}
             {document.extractedFields.pan_number && (
-              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">PAN Number</span>
-                <p className="font-bold text-[#FF9933] text-sm mt-0.5 tracking-wider">{document.extractedFields.pan_number}</p>
+              <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">PAN Number</span>
+                <p className="font-bold text-indigo-700 text-sm mt-0.5 tracking-wider">{document.extractedFields.pan_number}</p>
               </div>
             )}
             {document.extractedFields.dob && (
-              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Date of Birth</span>
-                <p className="font-bold text-white text-sm mt-0.5">{document.extractedFields.dob}</p>
+              <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">DOB</span>
+                <p className="font-bold text-slate-900 text-sm mt-0.5">{document.extractedFields.dob}</p>
               </div>
             )}
             {document.extractedFields.gender && (
-              <div className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Gender</span>
-                <p className="font-bold text-white text-sm mt-0.5">{document.extractedFields.gender}</p>
+              <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Gender</span>
+                <p className="font-bold text-slate-900 text-sm mt-0.5">{document.extractedFields.gender}</p>
               </div>
             )}
             {Object.entries(document.extractedFields)
               .filter(([k]) => !["name", "aadhaar_number", "pan_number", "dob", "gender", "raw_text"].includes(k))
               .map(([k, v]) => (
-                <div key={k} className="p-2.5 rounded-xs border border-white/10 bg-[#17171f]">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">{k.replace(/_/g, " ")}</span>
-                  <p className="font-bold text-white text-xs mt-0.5 truncate">{v}</p>
+                <div key={k} className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">{k.replace(/_/g, " ")}</span>
+                  <p className="font-bold text-slate-900 text-xs mt-0.5 truncate">{v}</p>
                 </div>
               ))}
           </div>
 
           {document.comparisonFindings && document.comparisonFindings.length > 0 && (
-            <div className="mt-3 p-2.5 rounded border border-rose-500/40 bg-rose-950/20 text-xs font-mono">
-              <span className="text-rose-400 font-bold block mb-1 text-[11px] uppercase tracking-wider">
+            <div className="mt-3 p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 text-xs">
+              <span className="text-amber-800 font-bold block mb-1 text-[11px] uppercase tracking-wider">
                 Cross-Verification Discrepancies:
               </span>
-              <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
+              <ul className="list-disc list-inside space-y-1 text-slate-700 text-[11px]">
                 {document.comparisonFindings.map((finding, idx) => (
                   <li key={idx}>{finding}</li>
                 ))}
@@ -419,21 +419,21 @@ export default function Report() {
           />
 
           {/* Institutional Disposition Action Card */}
-          <div className="terminal-panel p-3.5 font-mono text-xs border border-white/10 bg-[#101014] space-y-2">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 text-xs shadow-xs space-y-2.5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[9.5px] text-[#737380] uppercase">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#FF9933]" />
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
                 Institutional Disposition
               </div>
-              <span className="text-[9.5px] text-[#FF9933] font-semibold">
+              <span className="text-[10.5px] text-indigo-700 font-bold">
                 {flagged.length ? "Action Required" : "Archive Ready"}
               </span>
             </div>
 
-            <h3 className="font-mono text-xs font-bold text-white">
+            <h3 className="text-xs font-bold text-slate-900">
               {flagged.length
                 ? "Discrepancy Action: Queue Human Forensic Verification"
-                : "Disposition: Retain in Institutional Compliance Ledger"}
+                : "Disposition: Retain in Compliance Ledger"}
             </h3>
 
             <div className="pt-1 flex flex-wrap items-center gap-2">
@@ -441,7 +441,7 @@ export default function Report() {
                 <Button
                   onClick={handleReview}
                   disabled={hasReview || reviewMutation.isPending}
-                  className="w-full sm:w-auto h-8 border border-[#FF9933] bg-[#FF9933] text-slate-950 hover:bg-[#E68524] font-mono text-xs px-4 font-bold cursor-pointer"
+                  className="w-full sm:w-auto h-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-4 font-semibold rounded-lg shadow-xs cursor-pointer"
                 >
                   {hasReview
                     ? "Review Queued"
@@ -453,24 +453,24 @@ export default function Report() {
               ) : (
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto h-8 border border-white/10 bg-[#121217] text-white hover:bg-[#17171f] font-mono text-xs px-3.5 cursor-pointer"
+                  className="w-full sm:w-auto h-8 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs px-3.5 rounded-lg shadow-xs cursor-pointer"
                   onClick={() =>
                     toast.info("Reference Hash Copied", {
                       description: document.reference,
                     })
                   }
                 >
-                  <LockKeyhole className="mr-1.5 h-3.5 w-3.5 text-[#FF9933]" />
+                  <LockKeyhole className="mr-1.5 h-3.5 w-3.5 text-indigo-600" />
                   {t("copy_hash")}
                 </Button>
               )}
 
               <Button
                 variant="outline"
-                className="w-full sm:w-auto h-8 border border-[#FF9933]/50 bg-[#FF9933]/15 text-[#FFB057] hover:bg-[#FF9933]/25 font-mono text-xs px-3.5 cursor-pointer font-bold"
+                className="w-full sm:w-auto h-8 border-indigo-200 bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100 text-xs px-3.5 rounded-lg shadow-xs cursor-pointer font-semibold"
                 onClick={() => setShowPdfModal(true)}
               >
-                <Download className="mr-1.5 h-3.5 w-3.5 text-[#FF9933]" />
+                <Download className="mr-1.5 h-3.5 w-3.5 text-indigo-600" />
                 {t("export_pdf")}
               </Button>
             </div>
@@ -479,14 +479,14 @@ export default function Report() {
       </div>
 
       {/* Regulatory & Institutional Footnote */}
-      <div className="border border-white/10 bg-[#101014] px-3 py-2 font-mono text-[10px] text-slate-400 flex items-center justify-between">
+      <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-[11px] text-slate-500 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-1.5">
-          <HelpCircle className="h-3.5 w-3.5 shrink-0 text-[#FF9933]" />
+          <HelpCircle className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
           <span>
-            STATUTORY COMPLIANCE NOTICE: Algorithmic cryptographic inspection node. Evidentiary records sealed in volatile sandbox.
+            Compliance: Algorithmic cryptographic inspection node · Evidentiary records sealed
           </span>
         </div>
-        <span className="text-emerald-400 font-bold hidden sm:inline">VERISCAN PROD</span>
+        <span className="text-emerald-700 font-bold hidden sm:inline">VERISCAN PROD</span>
       </div>
 
       {/* Forensic Certificate Modal (Print-ready PDF) */}

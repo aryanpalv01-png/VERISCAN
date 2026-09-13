@@ -218,74 +218,74 @@ export default function Scan() {
   return (
     <div className="mx-auto max-w-[1280px] space-y-3.5 py-2 sm:py-3 px-2 sm:px-4">
       {/* Breadcrumb & Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-2.5 text-xs font-mono">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-200/80 pb-2.5 text-xs font-sans">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-slate-300 hover:text-[#FF9933] transition-colors"
+          className="inline-flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 transition-colors font-medium"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Cancel Screening</span>
         </Link>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10.5px] text-slate-400">
-          <span>Reference: <span className="text-white font-semibold">{document.reference}</span></span>
-          <span className="text-white/20">|</span>
-          <span>Elapsed: <span className="text-[#FF9933] font-bold">{formatElapsed(elapsedMs)}</span></span>
-          <span className="text-white/20">|</span>
-          <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 text-[10px] font-bold">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 cyber-pulse-green" />
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-500">
+          <span>Reference: <span className="text-slate-900 font-semibold">{document.reference}</span></span>
+          <span className="text-slate-300">|</span>
+          <span>Elapsed: <span className="text-indigo-600 font-bold">{formatElapsed(elapsedMs)}</span></span>
+          <span className="text-slate-300">|</span>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {activeStage >= PIPELINE_STEPS.length ? "Finalized" : "Analyzing"}
           </span>
         </div>
       </div>
 
-      {/* Primary Terminal Command Deck */}
-      <div className="terminal-panel border border-white/10 bg-[#101014]">
-        {/* Terminal Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 px-4 py-2.5 sm:px-5 bg-[#121217]">
+      {/* Primary Command Deck */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-200/80 px-4 py-3 sm:px-5 bg-slate-50/80">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center border border-white/10 bg-[#17171f] text-[#FF9933]">
-              <Terminal className="h-3.5 w-3.5" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-indigo-600 shadow-xs">
+              <Terminal className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-mono text-sm sm:text-base font-bold tracking-tight text-white uppercase">
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900">
                   Forensic Pipeline Execution Ledger
                 </h1>
-                <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 text-[9.5px] font-bold">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {activeCount} / 11 Active Modules
                 </span>
                 {activeStage >= PIPELINE_STEPS.length && (
-                  <span className={`command-badge ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border} text-[9.5px] font-bold`}>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
                     Score: {document.score}/100 · {statusBadge.label}
                   </span>
                 )}
               </div>
-              <p className="font-mono text-[10.5px] text-[#737380] mt-0.5 truncate">
+              <p className="text-[11px] text-slate-500 mt-0.5 truncate font-sans">
                 Target: {document.filename} · Size: {document.fileSize} · Type: {document.type.toUpperCase()}
               </p>
             </div>
           </div>
 
-          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 font-mono">
-            <div className="text-xs text-[#9CA3AF]">
-              Pipeline Stage: <span className="text-white font-bold">{activeStage} / {PIPELINE_STEPS.length}</span>
+          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 font-sans">
+            <div className="text-xs text-slate-600">
+              Stage: <span className="text-slate-900 font-bold">{activeStage} / {PIPELINE_STEPS.length}</span>
             </div>
-            <div className="text-[10.5px] text-[#FF9933] font-semibold">
+            <div className="text-[11px] text-indigo-600 font-bold">
               {progressPercent}% Complete
             </div>
           </div>
         </div>
 
         {/* Global Progress Track */}
-        <div className="h-1.5 w-full bg-[#0a0a0c] border-b border-white/10">
+        <div className="h-1.5 w-full bg-slate-100 border-b border-slate-200">
           <div
-            className="h-full bg-linear-to-r from-[#FF9933] to-[#10B981] transition-all duration-300 shadow-[0_0_10px_#10B981]"
+            className="h-full bg-indigo-600 transition-all duration-300"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
 
         {/* Linear Terminal Pipeline Ticker */}
-        <div className="p-3 sm:p-4 space-y-1.5">
+        <div className="p-3 sm:p-4 space-y-1.5 bg-white">
           {PIPELINE_STEPS.map((step, idx) => {
             const isDone = idx < activeStage;
             const isRunning = idx === activeStage && activeStage < PIPELINE_STEPS.length;
@@ -295,36 +295,36 @@ export default function Scan() {
             return (
               <div
                 key={step.stageNumber}
-                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-3 py-2 border transition-colors font-mono text-xs ${
+                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl border transition-colors text-xs ${
                   isRunning
-                    ? "border-[#FF9933] bg-[#FF9933]/15 text-white shadow-[0_0_12px_rgba(255,153,51,0.15)]"
+                    ? "border-indigo-300 bg-indigo-50/70 text-indigo-950 shadow-xs"
                     : isDone
                     ? check?.result === "flag"
-                      ? "border-rose-800/40 bg-rose-950/20 text-slate-200"
-                      : "border-white/10 bg-[#121217] text-slate-200"
-                    : "border-white/5 bg-[#0e0e12] text-[#737380]"
+                      ? "border-amber-200 bg-amber-50/50 text-slate-900"
+                      : "border-slate-200/80 bg-white text-slate-900"
+                    : "border-slate-100 bg-slate-50 text-slate-400"
                 }`}
               >
                 {/* Left: Step indicator & Description */}
                 <div className="flex items-start sm:items-center gap-3 min-w-0">
-                  <span className={`text-[11px] shrink-0 font-bold ${
+                  <span className={`text-[11px] shrink-0 font-bold px-2 py-0.5 rounded-md ${
                     isRunning
-                      ? "text-[#FF9933]"
+                      ? "bg-indigo-600 text-white"
                       : isDone
                       ? check?.result === "flag"
-                        ? "text-amber-400"
-                        : "text-[#138808]"
-                      : "text-slate-600"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-emerald-100 text-emerald-800"
+                      : "bg-slate-200 text-slate-500"
                   }`}>
                     Stage {step.stageNumber}
                   </span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-semibold tracking-normal ${isRunning ? "text-white" : isDone ? "text-slate-200" : "text-slate-400"}`}>
+                      <span className={`font-semibold ${isRunning ? "text-indigo-950 font-bold" : isDone ? "text-slate-900" : "text-slate-400"}`}>
                         {step.name}
                       </span>
-                      <span className="text-[#3A3D45] hidden sm:inline">·</span>
-                      <span className="text-[11px] text-slate-400 truncate">
+                      <span className="text-slate-300 hidden sm:inline">·</span>
+                      <span className="text-[11px] text-slate-500 truncate">
                         {isDone && check?.explanation ? check.explanation : step.detail}
                       </span>
                     </div>
@@ -337,36 +337,36 @@ export default function Scan() {
                     {step.subsystem}
                   </span>
                   {isDone && step.checkKey === "fusion_engine" && (
-                    <span className={`command-badge ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
                       Score: {document.score}/100
                     </span>
                   )}
                   {isDone && step.checkKey !== "fusion_engine" && check && check.result === "pass" && (
-                    <span className="command-badge command-badge-verified">
-                      <CheckCircle2 className="h-3 w-3 text-[#138808]" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                       Pass ({check.confidence}%)
                     </span>
                   )}
                   {isDone && step.checkKey !== "fusion_engine" && check && check.result === "flag" && (
-                    <span className="command-badge bg-amber-500/20 text-amber-300 border-amber-500/40">
-                      <AlertTriangle className="h-3 w-3 text-amber-400" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                      <AlertTriangle className="h-3 w-3 text-amber-600" />
                       Flagged ({check.confidence}%)
                     </span>
                   )}
                   {isDone && step.checkKey !== "fusion_engine" && (!check || check.result === "not_applicable") && (
-                    <span className="command-badge command-badge-verified">
-                      <CheckCircle2 className="h-3 w-3 text-[#138808]" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                       Verified
                     </span>
                   )}
                   {isRunning && (
-                    <span className="command-badge bg-[#FF9933]/20 text-[#FFB057] border-[#FF9933] flex items-center gap-1.5 animate-pulse">
-                      <Loader2 className="h-3 w-3 animate-spin text-[#FF9933]" />
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 animate-pulse">
+                      <Loader2 className="h-3 w-3 animate-spin text-indigo-600" />
                       Analyzing
                     </span>
                   )}
                   {isQueued && (
-                    <span className="command-badge bg-transparent text-slate-500 border-[#3A3D45]">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
                       Queued
                     </span>
                   )}
@@ -376,48 +376,48 @@ export default function Scan() {
           })}
         </div>
 
-        {/* Terminal Telemetry Log Box */}
-        <div className="border-t border-white/10 bg-[#121217] p-3.5">
+        {/* Telemetry Log Box */}
+        <div className="border-t border-slate-200/80 bg-slate-50 p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-[10.5px] text-slate-400 font-semibold uppercase">
-              Pipeline Execution Log // Telemetry Stream
+            <span className="text-[11px] text-slate-600 font-bold uppercase tracking-wider">
+              Pipeline Execution Stream
             </span>
-            <span className="font-mono text-[10.5px] text-emerald-400 font-bold flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 cyber-pulse-green" />
+            <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {activeStage >= PIPELINE_STEPS.length ? "Screening Finalized" : "Engine Active"}
             </span>
           </div>
-          <div className="h-32 overflow-y-auto font-mono text-[11px] text-slate-400 space-y-1 bg-[#0a0a0c] p-3 border border-white/10">
-            <p className="text-[#FF9933]">&gt; Core: Initializing secure forensic sandbox for reference {document.reference}...</p>
-            <p className="text-slate-400">&gt; Ingestion: Document payload decoded (format: {document.mimeType}, size: {document.fileSize}).</p>
+          <div className="h-32 overflow-y-auto font-mono text-[11px] text-slate-700 space-y-1 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+            <p className="text-indigo-600 font-semibold">&gt; Core: Initializing secure forensic sandbox for reference {document.reference}...</p>
+            <p className="text-slate-500">&gt; Ingestion: Document payload decoded (format: {document.mimeType}, size: {document.fileSize}).</p>
             {PIPELINE_STEPS.slice(0, activeStage).map((step) => {
               const check = findCheckForStep(step, document.checks);
               if (step.checkKey === "fusion_engine") {
                 return (
-                  <p key={step.stageNumber} className="text-emerald-400 font-bold">
+                  <p key={step.stageNumber} className="text-emerald-700 font-bold">
                     &gt; [Fusion Engine]: Multi-evidence score synthesized: {document.score}/100 · Verdict: {document.status.toUpperCase()} ({activeCount} active modules evaluated).
                   </p>
                 );
               }
               const isFlag = check?.result === "flag";
               return (
-                <p key={step.stageNumber} className={isFlag ? "text-rose-400" : "text-emerald-400"}>
+                <p key={step.stageNumber} className={isFlag ? "text-amber-700" : "text-emerald-700"}>
                   &gt; [{step.subsystem}] {step.name} =&gt; {check ? `${check.result.toUpperCase()} (${check.confidence}%)` : "NOMINAL"}: {check?.explanation || step.detail}
                 </p>
               );
             })}
             {activeStage < PIPELINE_STEPS.length && (
-              <p className="text-[#FF9933] animate-pulse">
+              <p className="text-indigo-600 animate-pulse">
                 &gt; [{PIPELINE_STEPS[activeStage].subsystem}] {PIPELINE_STEPS[activeStage].name}: Executing inspection...
               </p>
             )}
             {activeStage >= PIPELINE_STEPS.length && (
-              <div className="pt-2 flex items-center justify-between">
-                <p className="text-emerald-400 font-bold">
+              <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                <p className="text-emerald-700 font-bold">
                   &gt; VeriScan: All 11 forensic modules executed. Final dossier prepared.
                 </p>
                 <Link href={`/report/${params?.id && !params.id.startsWith("doc-") ? params.id : document.id}`}>
-                  <Button size="sm" className="h-6 gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-[10px] px-2.5 cursor-pointer">
+                  <Button size="sm" className="h-6 gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] px-2.5 rounded-lg cursor-pointer">
                     View Forensic Report <ArrowRight className="h-3 w-3" />
                   </Button>
                 </Link>

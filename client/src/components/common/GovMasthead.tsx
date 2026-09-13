@@ -16,11 +16,7 @@ export function GovMasthead({ compact = false, theme = "light" }: GovMastheadPro
       <div className="tiranga-stripe" />
 
       {/* Official Masthead Text Bar */}
-      <div className={`px-3 sm:px-4 py-1.5 text-[11px] transition-colors ${
-        isLight
-          ? "bg-white text-slate-600 border-b border-slate-200/80"
-          : "bg-[#0a0a0c] text-[#D1CEC7] border-b border-white/10"
-      }`}>
+      <div className="px-3 sm:px-4 py-1.5 text-[11px] transition-colors bg-white text-slate-600 border-b border-slate-200/80">
         <div className="mx-auto flex max-w-[1520px] items-center justify-between gap-2 font-medium">
           {/* Left: National Identity */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -29,9 +25,7 @@ export function GovMasthead({ compact = false, theme = "light" }: GovMastheadPro
               <span>भारत सरकार</span>
             </span>
             <span className="text-slate-300 hidden sm:inline">|</span>
-            <span className={`font-semibold tracking-tight hidden sm:inline truncate ${
-              isLight ? "text-slate-900" : "text-white"
-            }`}>
+            <span className="font-semibold tracking-tight hidden sm:inline truncate text-slate-900">
               {t("govt_of_india")}
             </span>
             {!compact && (

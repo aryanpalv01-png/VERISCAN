@@ -36,7 +36,7 @@ function WorkspaceRoute({ children, allowGuest = true }: { children: React.React
 function Router() {
   return (
     <Switch>
-      <Route path="/"><WorkspaceRoute><Dashboard /></WorkspaceRoute></Route>
+      <Route path="/" component={Home} />
       <Route path="/home" component={Home} />
       <Route path="/auth/login" component={Auth} />
       <Route path="/auth/register" component={Auth} />

@@ -212,13 +212,13 @@ export function DocumentUploadPanel({
         </div>
       ) : stagedFile ? (
         /* 2. Staged File Confirmation with Cancel Option */
-        <div className="terminal-panel p-4 sm:p-5 border border-white/10 bg-[#101014] text-[#FAF7F0]">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="rounded-2xl p-4 sm:p-5 border border-slate-200/80 bg-white text-slate-900 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
-              <span className="command-badge border-emerald-500/40 bg-emerald-950/40 text-emerald-400 font-bold text-[10px]">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 STAGED
               </span>
-              <span className="font-mono text-xs font-semibold text-slate-300">
+              <span className="text-xs font-semibold text-slate-700">
                 {t("staged_payload")}
               </span>
             </div>
@@ -227,7 +227,7 @@ export function DocumentUploadPanel({
               variant="ghost"
               size="sm"
               onClick={handleCancelStaged}
-              className="text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 text-xs font-mono h-8 px-2.5"
+              className="text-rose-600 hover:bg-rose-50 text-xs h-8 px-2.5 rounded-lg"
             >
               <X className="mr-1 h-3.5 w-3.5" /> {t("discard")}
             </Button>
@@ -235,7 +235,7 @@ export function DocumentUploadPanel({
 
           <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-[110px_1fr] items-center">
             {stagedPreviewUrl ? (
-              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 overflow-hidden border border-white/10 bg-[#0a0a0c] flex items-center justify-center">
+              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
                 <img
                   src={stagedPreviewUrl}
                   alt="Selected Document"
@@ -243,17 +243,17 @@ export function DocumentUploadPanel({
                 />
               </div>
             ) : (
-              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 border border-white/10 bg-[#0a0a0c] flex items-center justify-center text-slate-500">
-                <FileUp className="h-6 w-6 text-[#FF9933]" />
+              <div className="aspect-[1.2/1] w-full max-w-[140px] sm:max-w-none mx-auto sm:mx-0 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-500">
+                <FileUp className="h-6 w-6 text-indigo-600" />
               </div>
             )}
 
             <div className="space-y-2 text-center sm:text-left">
-              <p className="font-mono text-xs font-bold text-white truncate max-w-[320px] mx-auto sm:mx-0">
+              <p className="text-xs font-bold text-slate-900 truncate max-w-[320px] mx-auto sm:mx-0">
                 {stagedFile.name}
               </p>
-              <p className="font-mono text-[11px] text-slate-400">
-                Payload: {(stagedFile.size / (1024 * 1024)).toFixed(2)} MB · Type: {stagedFile.type || "binary"}
+              <p className="text-[11px] text-slate-500">
+                Size: {(stagedFile.size / (1024 * 1024)).toFixed(2)} MB · Type: {stagedFile.type || "binary"}
               </p>
 
               <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-2.5 w-full">
@@ -261,7 +261,7 @@ export function DocumentUploadPanel({
                   type="button"
                   disabled={disabled}
                   onClick={handleConfirmUpload}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[36px] bg-[#FF9933] hover:bg-[#E68524] text-slate-950 font-mono font-bold text-xs px-5 rounded-xs cursor-pointer shadow-xs"
+                  className="w-full sm:w-auto h-9 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 rounded-xl cursor-pointer shadow-xs"
                 >
                   <ScanSearch className="mr-1.5 h-4 w-4" />
                   {disabled ? "Executing…" : t("execute_screening")}
@@ -271,7 +271,7 @@ export function DocumentUploadPanel({
                   variant="outline"
                   onClick={handleCancelStaged}
                   disabled={disabled}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[36px] border-white/10 bg-[#121217] text-slate-400 hover:text-white font-mono text-xs px-4 rounded-xs cursor-pointer"
+                  className="w-full sm:w-auto h-9 border-slate-200 bg-slate-50 text-slate-600 hover:text-slate-900 font-semibold text-xs px-4 rounded-xl cursor-pointer"
                 >
                   <Trash2 className="mr-1 h-3.5 w-3.5" /> {t("discard")}
                 </Button>
@@ -282,9 +282,9 @@ export function DocumentUploadPanel({
       ) : (
         /* 3. Default Upload Dropzone with Choose File & Camera Scan */
         <div
-          className={`upload-dropzone border border-white/10 bg-[#101014] ${isDragging ? "!border-[#FF9933] !bg-[#17171f]" : ""} ${
-            disabled ? "pointer-events-none opacity-60" : ""
-          }`}
+          className={`upload-dropzone rounded-2xl border-2 border-dashed border-indigo-200 bg-slate-50/70 hover:bg-indigo-50/40 hover:border-indigo-500 transition-all ${
+            isDragging ? "!border-indigo-600 !bg-indigo-50" : ""
+          } ${disabled ? "pointer-events-none opacity-60" : ""}`}
           onDragEnter={(event) => {
             if (disabled) return;
             event.preventDefault();
@@ -305,15 +305,15 @@ export function DocumentUploadPanel({
             accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
             onChange={(event) => handleSelectFile(event.target.files?.[0])}
           />
-          <div className="flex h-10 w-10 items-center justify-center border border-[#FF9933] bg-[#181A1D] text-[#FF9933]">
-            <FileUp className="h-5 w-5" strokeWidth={1.75} />
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600 shadow-xs">
+            <FileUp className="h-5 w-5" strokeWidth={2} />
           </div>
 
           <div className="max-w-md text-center mt-3 px-2">
-            <h3 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
               {t("dropzone_title")}
             </h3>
-            <p className="mt-1 font-mono text-xs text-slate-400 leading-relaxed">
+            <p className="mt-0.5 text-xs text-slate-500">
               {t("dropzone_subtitle")}
             </p>
           </div>
@@ -322,7 +322,7 @@ export function DocumentUploadPanel({
             <Button
               type="button"
               disabled={disabled}
-              className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] bg-[#FF9933] hover:bg-[#E68524] text-slate-950 font-mono font-bold text-xs px-5 rounded-xs cursor-pointer shadow-xs"
+              className="w-full sm:w-auto h-9 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 rounded-xl cursor-pointer shadow-xs"
               onClick={() => inputRef.current?.click()}
             >
               <ScanSearch className="mr-1.5 h-4 w-4" />
@@ -332,31 +332,31 @@ export function DocumentUploadPanel({
               type="button"
               variant="outline"
               disabled={disabled}
-              className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] border-white/10 bg-[#121217] text-slate-300 hover:border-[#FF9933] hover:text-[#FF9933] font-mono text-xs px-4 rounded-xs transition-colors cursor-pointer"
+              className="w-full sm:w-auto h-9 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold px-4 rounded-xl shadow-xs transition-colors cursor-pointer"
               onClick={startCamera}
             >
-              <Camera className="mr-1.5 h-4 w-4 text-[#FF9933]" />
+              <Camera className="mr-1.5 h-4 w-4 text-indigo-600" />
               {t("optical_camera")}
             </Button>
           </div>
 
-          <p className="mt-3 font-mono text-[10px] uppercase tracking-normal text-[#737380]">
+          <p className="mt-3 text-[10.5px] uppercase tracking-wider text-slate-400 font-semibold">
             {t("upload_limits")}
           </p>
 
-          <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-slate-400">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
             <span className="inline-flex items-center gap-1">
-              <LockKeyhole className="h-3 w-3 text-[#FF9933]" /> {t("client_enclave")}
+              <LockKeyhole className="h-3 w-3 text-indigo-600" /> {t("client_enclave")}
             </span>
-            <span className="text-white/10">|</span>
+            <span className="text-slate-300">|</span>
             <span className="inline-flex items-center gap-1">
-              <FileCheck2 className="h-3 w-3 text-emerald-400" /> {t("zero_disk")}
+              <FileCheck2 className="h-3 w-3 text-emerald-600" /> {t("zero_disk")}
             </span>
           </div>
 
           {/* Forensic Benchmark Specimen Chips */}
-          <div className="mt-4 border-t border-white/10 pt-3 w-full text-center">
-            <p className="font-mono text-[10px] uppercase tracking-normal text-[#737380] mb-2">
+          <div className="mt-4 border-t border-slate-200/80 pt-3 w-full text-center">
+            <p className="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold mb-2">
               {t("load_specimen")}:
             </p>
             <div className="flex flex-wrap justify-center gap-1.5">
@@ -369,10 +369,10 @@ export function DocumentUploadPanel({
                 <a
                   key={sample.id}
                   href={`/report/${sample.id}`}
-                  className={`font-mono text-[10.5px] px-2.5 py-1 min-h-[30px] flex items-center border rounded-xs transition-all ${
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
                     sample.tone === "verified"
-                      ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/40"
-                      : "border-rose-900/50 bg-rose-950/30 text-rose-400 hover:bg-rose-900/40"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
                   }`}
                 >
                   {sample.label}
@@ -385,7 +385,7 @@ export function DocumentUploadPanel({
 
       {error && (
         <p
-          className="mt-2 border border-rose-900/60 bg-rose-950/40 px-3 py-2 font-mono text-xs text-rose-400"
+          className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 font-medium"
           role="alert"
         >
           Error: {error}

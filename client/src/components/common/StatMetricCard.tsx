@@ -22,50 +22,55 @@ export function StatMetricCard({
 }: StatMetricCardProps) {
   const accentStyles = {
     saffron: {
-      border: "border-[#FF9933]/50",
-      text: "text-[#FF9933]",
+      border: "border-indigo-200",
+      bg: "bg-indigo-50",
+      text: "text-indigo-600",
     },
     green: {
-      border: "border-[#138808]/50",
-      text: "text-[#138808]",
+      border: "border-emerald-200",
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
     },
     review: {
-      border: "border-amber-500/50",
-      text: "text-amber-400",
+      border: "border-amber-200",
+      bg: "bg-amber-50",
+      text: "text-amber-600",
     },
     navy: {
-      border: "border-[#3A3D45]",
-      text: "text-slate-300",
+      border: "border-slate-200",
+      bg: "bg-slate-50",
+      text: "text-slate-600",
     },
     crimson: {
-      border: "border-rose-500/50",
-      text: "text-rose-400",
+      border: "border-rose-200",
+      bg: "bg-rose-50",
+      text: "text-rose-600",
     },
   }[accent];
 
   return (
-    <div className="terminal-panel p-4 font-mono">
-      <div className="flex items-center justify-between border-b border-[#3A3D45] pb-2">
-        <span className="text-[11px] font-bold uppercase tracking-normal text-slate-400">
+    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           {label}
         </span>
-        <div className={`flex h-7 w-7 items-center justify-center border ${accentStyles.border} bg-[#1C1E22] ${accentStyles.text}`}>
+        <div className={`flex h-7 w-7 items-center justify-center rounded-lg border ${accentStyles.border} ${accentStyles.bg} ${accentStyles.text}`}>
           {icon}
         </div>
       </div>
 
       <div className="mt-3">
-        <p className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-white">
+        <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
           {value}
         </p>
         <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
-          <p className="truncate text-slate-400">{note}</p>
+          <p className="truncate text-slate-500 font-medium">{note}</p>
           {trend && (
             <span
-              className={`shrink-0 px-1.5 py-0.5 text-[10px] font-bold border ${
+              className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                 trend.positive
-                  ? "border-[#138808]/40 bg-[#138808]/10 text-[#4ADE80]"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-amber-200 bg-amber-50 text-amber-700"
               }`}
             >
               {trend.text}

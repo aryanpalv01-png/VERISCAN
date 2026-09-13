@@ -18,35 +18,35 @@ export function PageHeader({
   accountBadge,
 }: PageHeaderProps) {
   return (
-    <div className="terminal-panel p-5 sm:p-6">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="min-w-0 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="command-badge bg-[#FF9933]/15 text-[#FFB057] border-[#FF9933]/40 flex items-center gap-1.5 font-bold">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#FF9933]" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
               {categoryHindi ? `${categoryHindi} · ` : ""}
               {categoryEnglish}
             </span>
             {accountBadge && (
-              <span className="command-badge bg-[#1C1E22] text-[#A09D95] border-[#3A3D45]">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                 {accountBadge}
               </span>
             )}
           </div>
 
-          <h1 className="mt-2.5 font-serif text-2xl font-bold tracking-tight text-[#FAF7F0] sm:text-3xl">
+          <h1 className="mt-2.5 font-sans text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
             {title}
           </h1>
 
           {subtitle && (
-            <div className="mt-1 font-mono text-xs leading-relaxed text-[#A09D95]">
+            <div className="mt-1 text-xs leading-relaxed text-slate-600">
               {subtitle}
             </div>
           )}
         </div>
 
         {actions && (
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center font-mono text-xs">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-center text-xs">
             {actions}
           </div>
         )}

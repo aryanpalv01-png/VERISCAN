@@ -72,40 +72,44 @@ export default function DashboardLayout({
 
   if (!user && !allowGuest) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#0a0a0c] text-[#FAF7F0]">
-        <GovMasthead theme="dark" />
+      <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900 font-sans">
+        <GovMasthead theme="light" />
 
         <div className="flex flex-1 items-center justify-center px-4 py-12">
-          <div className="w-full max-w-md terminal-panel p-8 text-center border border-white/10 bg-[#101014]">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-[#FF9933] bg-[#0a0a0c] text-[#FF9933]">
-              <AshokaChakra className="h-7 w-7 text-[#FF9933]" />
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-xs">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600">
+              <AshokaChakra className="h-7 w-7 text-indigo-600" />
             </div>
 
-            <span className="command-badge bg-[#FF9933]/15 text-[#FF9933] border-[#FF9933]/40 font-bold">
-              🇮🇳 भारत सरकार · NATIONAL COMPLIANCE TERMINAL
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              NATIONAL COMPLIANCE NODE
             </span>
 
-            <h1 className="mt-4 font-serif text-2xl font-bold tracking-tight text-[#FAF7F0]">
-              Access Institutional Forensic Workspace
+            <h1 className="mt-3 text-xl font-bold tracking-tight text-slate-900">
+              Institutional Forensic Workspace
             </h1>
 
-            <p className="mt-2 text-xs leading-relaxed text-[#A09D95]">
-              Screening records are strictly isolated and cryptographically signed. Authenticate with verified credentials.
+            <p className="mt-1 text-xs text-slate-500">
+              Authentication required for evidentiary screening logs.
             </p>
 
-            <div className="mt-6">
+            <div className="mt-6 space-y-2">
               <Button
                 onClick={() => (window.location.href = "/auth/login")}
                 size="lg"
-                className="w-full border border-[#FF9933] bg-[#FF9933] text-slate-950 hover:bg-[#E68524] font-mono font-bold text-xs h-10"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-10 rounded-xl shadow-xs"
               >
-                Sign In with Email OTP
+                Sign In to Continue
+              </Button>
+              <Button
+                onClick={() => (window.location.href = "/")}
+                variant="outline"
+                size="sm"
+                className="w-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold h-9 rounded-xl"
+              >
+                Back to Homepage
               </Button>
             </div>
-
-            <p className="mt-6 font-mono text-[10px] text-[#A09D95]">
-              सत्यमेव जयते · Evidentiary Document Screening Node
-            </p>
           </div>
         </div>
       </div>
