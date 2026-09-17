@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { fileToBase64, readLocalScans, writeLocalScan } from "@/lib/scanStore";
 import {
+  analyzeDocumentFile,
   analyzeDocumentDirectly,
   calculateAggregatedConfidenceScore,
+  detectDocumentType,
+  DocumentKind,
   formatDate,
   formatDocumentType,
-  makeDemoDocument,
   demoDocuments,
   statusMeta,
   VerificationDocument,
@@ -178,16 +180,14 @@ export default function Dashboard() {
         }
 
         try {
-          const fallback = await analyzeDocumentDirectly(currentFileRef.current);
+          const fallback = await analyzeDocumentFile(currentFileRef.current);
           writeLocalScan(fallback, userIdentifier);
           setLocalScans(readLocalScans(userIdentifier));
           setSelectedDocId(fallback.id);
           return;
-        } catch {
-          const fallback = makeDemoDocument(currentFileRef.current, previewUrl);
-          writeLocalScan(fallback, userIdentifier);
-          setLocalScans(readLocalScans(userIdentifier));
-          setSelectedDocId(fallback.id);
+        } catch (pipelineErr: any) {
+          setUploadError(pipelineErr.message || error.message || "Upload processing error");
+          toast.error("Upload error", { description: pipelineErr.message || error.message });
           return;
         }
       }
@@ -253,6 +253,8 @@ export default function Dashboard() {
     return allDocuments[0] || demoDocuments[0];
   }, [selectedDocId, allDocuments]);
 
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   useEffect(() => {
     setLocalScans(readLocalScans(userIdentifier));
     const refresh = () => setLocalScans(readLocalScans(userIdentifier));
@@ -260,39 +262,43 @@ export default function Dashboard() {
     return () => window.removeEventListener("storage", refresh);
   }, [userIdentifier]);
 
-  const handleFileIngest = async (file: File) => {
+  const handleFileIngest = async (file: File, documentType?: DocumentKind) => {
     setUploadError("");
+    setIsAnalyzing(true);
     currentFileRef.current = file;
 
-    const docType = file.name.toLowerCase().includes("aadhaar")
-      ? "aadhaar"
-      : file.name.toLowerCase().includes("pan")
-      ? "pan"
-      : file.name.toLowerCase().includes("passport")
-      ? "passport"
-      : "other";
+    const docType = documentType || detectDocumentType(file.name);
 
     try {
-      const contentBase64 = await fileToBase64(file);
-      createScan.mutate({
-        fileName: file.name,
-        documentType: docType,
-        fileSize: file.size,
-        mimeType: file.type || "image/jpeg",
-        contentBase64,
+      // 1. Direct Real Execution via multipart/form-data to /api/analyze
+      const analyzedDoc = await analyzeDocumentFile(file, docType);
+      writeLocalScan(analyzedDoc, userIdentifier);
+      setLocalScans(readLocalScans(userIdentifier));
+      setSelectedDocId(analyzedDoc.id);
+
+      toast.success("Specimen Analyzed", {
+        description: `Verified ${analyzedDoc.activeModulesCount || 11} modules with score ${analyzedDoc.score}/100`,
       });
-    } catch {
+
+      // 2. Synchronize to server database if available
       try {
-        const fallback = await analyzeDocumentDirectly(file);
-        writeLocalScan(fallback, userIdentifier);
-        setLocalScans(readLocalScans(userIdentifier));
-        setSelectedDocId(fallback.id);
+        const contentBase64 = await fileToBase64(file);
+        createScan.mutate({
+          fileName: file.name,
+          documentType: docType,
+          fileSize: file.size,
+          mimeType: file.type || "image/jpeg",
+          contentBase64,
+        });
       } catch {
-        const fallback = makeDemoDocument(file);
-        writeLocalScan(fallback, userIdentifier);
-        setLocalScans(readLocalScans(userIdentifier));
-        setSelectedDocId(fallback.id);
+        // Local state is already active and rendered
       }
+    } catch (err: any) {
+      console.error("Direct specimen analysis error:", err);
+      setUploadError(err.message || "Forensic analysis failed. Please provide a valid specimen.");
+      toast.error("Analysis Error", { description: err.message || "Failed to process specimen." });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -379,11 +385,11 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={createScan.isPending}
+            disabled={createScan.isPending || isAnalyzing}
             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 text-xs shadow-xs hover:shadow transition-all cursor-pointer disabled:opacity-50"
           >
             <UploadCloud className="h-3.5 w-3.5" />
-            <span>{createScan.isPending ? "Ingesting..." : "+ Ingest Specimen"}</span>
+            <span>{createScan.isPending || isAnalyzing ? "Analyzing Specimen..." : "+ Ingest Specimen"}</span>
           </button>
           <input
             ref={fileInputRef}
@@ -452,7 +458,7 @@ export default function Dashboard() {
               selectedCheckId={selectedCheckId}
               onSelectCheck={handleSelectCheck}
               onFileIngest={handleFileIngest}
-              isIngesting={createScan.isPending}
+              isIngesting={createScan.isPending || isAnalyzing}
             />
           </div>
         </div>

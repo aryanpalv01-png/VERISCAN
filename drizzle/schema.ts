@@ -17,7 +17,7 @@ export const documents = mysqlTable("documents", {
   userId: int("userId").notNull(),
   fileKey: varchar("fileKey", { length: 512 }).notNull(),
   fileUrl: varchar("fileUrl", { length: 768 }).notNull(),
-  documentType: mysqlEnum("documentType", ["aadhaar", "pan", "passport", "marksheet", "bank_statement", "other"]).default("other").notNull(),
+  documentType: mysqlEnum("documentType", ["aadhaar", "pan", "passport", "marksheet", "bank_statement", "medical_bill", "prescription", "scheme_document", "other"]).default("other").notNull(),
   originalFilename: varchar("originalFilename", { length: 255 }).notNull(),
   mimeType: varchar("mimeType", { length: 100 }).notNull(),
   fileSize: int("fileSize").notNull(),

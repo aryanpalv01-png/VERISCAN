@@ -40,6 +40,7 @@ import { GovMasthead } from "./common/GovMasthead";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
+  { icon: ShieldCheck, label: "Border Terminal", path: "/border" },
   { icon: FileSearch, label: "Verify Document", path: "/verify" },
   { icon: FileCheck2, label: "Verdicts & Reports", path: "/reports" },
   { icon: History, label: "Audit Ledger", path: "/history" },

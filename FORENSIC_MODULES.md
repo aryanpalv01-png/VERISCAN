@@ -10,11 +10,12 @@ VeriScan treats document screening as an evidence-fusion workflow rather than a 
 | ELA / compression | Decoded-pixel preflight plus optional authenticated pixel worker | Local preflight is active for supported images; worker signals are active only when the worker returns a validated result |
 | Copy-move / clone | Block-level local preflight plus optional worker | Local preflight is conservative and should not be treated as a full localization model |
 | Screenshot / capture type | Decoded-pixel noise-variance preflight plus optional worker | Signal is excluded when the input is not a supported image |
+| Multi-Class Forensic CNN Layer | MobileNetV3-Lite (ONNX CPU Runtime, <100ms) | Active for uploaded images; outputs 5-class breakdown (Pristine, Photo Replacement, Text Tampering, Seal Anomaly, Screenshot) |
 | OCR typography and field extraction | Self-hosted Tesseract through `pytesseract` | No API key; requires the local worker endpoint to be configured |
 | Hugging Face AI-image detector | Server-side `Organika/sdxl-detector` inference | The only third-party API integration; requires `HF_API_TOKEN` |
 | TruFor | Official repository hosted behind the self-hosted worker | No API key; requires the operator-installed checkpoint and worker endpoint |
 | CAT-Net | Official repository hosted behind the self-hosted worker | No API key; requires the operator-installed checkpoint and worker endpoint |
-| Score fusion | Weighted TypeScript fusion engine | Active; hard checksum/signature failures cap the score below the likely-forged threshold |
+| Score fusion | Tier A hard override + multi-signal evidence fusion engine | Active; hard checksum/signature failures cap the score <=15; unverified templates capped <=45 |
 
 ## Exact credential and configuration policy
 

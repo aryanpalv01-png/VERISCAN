@@ -25,10 +25,13 @@ export interface FusionResult {
 }
 
 const MODULE_WEIGHTS: Record<string, number> = {
+  issuer_whitelist_validation: 4.0,
   checksum_identifier_validation: 3.5,
   checksum_validation: 3.5,
   qr_signature_verification: 3.5,
   copy_move_clone_detection: 1.8,
+  structural_template_matching: 2.0,
+  font_stroke_consistency: 1.5,
   trufor_inference: 1.8,
   catnet_inference: 1.8,
   ocr_typography_consistency: 1.5,
@@ -42,15 +45,20 @@ const MODULE_WEIGHTS: Record<string, number> = {
 /**
  * Tier A Checks:
  * STRICT RULE: Tier A hard overrides apply ONLY to definitive deterministic failures:
- * - Mathematical checksum failure (Verhoeff algorithm / PAN structural regex)
+ * - Issuer ISO 3166-1 whitelist validation
+ * - Mathematical checksum failure (ICAO 9303 / Verhoeff algorithm / PAN structural regex)
  * - Cryptographic signature mismatch (UIDAI 2048-bit digital signature / issuer cert)
+ * - Biometric liveness failure / presentation attack
  *
- * Visual and neural modules are heuristic and MUST NOT trigger Tier A hard overrides.
+ * The fusion function returns IMMEDIATELY with capped score (max 15).
  */
 export const DETERMINISTIC_TIER_A_CHECKS = new Set([
+  "issuer_whitelist_validation",
   "checksum_identifier_validation",
   "checksum_validation",
   "qr_signature_verification",
+  "biometric_liveness_check",
+  "liveness_anti_spoofing",
 ]);
 
 /**
@@ -244,6 +252,27 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
   const isCumulativeHeuristicFail = tierBFailures.length >= 2;
   const isSingleHeuristicFail = tierBFailures.length === 1;
 
+  // HARD OVERRIDE ENFORCEMENT:
+  // Return immediately with a capped score (max 15) the moment ANY Tier A check fails.
+  // Do NOT include Tier A results as a weighted input into an averaging function.
+  if (isTierAFailed) {
+    const earlyReturnScore = 15; // Strictly max 15
+    return {
+      score: earlyReturnScore,
+      status: "likely_forged",
+      tierAHardOverride: true,
+      tierBCumulativePenalty: false,
+      tierAFailures,
+      tierBFailures,
+      rawScore: earlyReturnScore,
+      penaltiesApplied: 85,
+      unconfiguredModules,
+      dormantNeuralChecks,
+      activeModulesCount: active.length,
+      summary: `Likely Forged (Score: ${earlyReturnScore}/100). Critical failure in Tier A verification (${tierAFailures.join(", ")}). Hard override early-return enforced.`,
+    };
+  }
+
   // 2. Penalty-Subtraction Model: Start from base score 100
   const BASE_SCORE = 100;
   let penaltiesApplied = 0;
@@ -326,12 +355,14 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
     }
   }
 
-  // 5. Apply Tier A Hard Override (Deterministic Failures & High-Confidence Tamper Localization)
-  // Strict Tier-A Veto Override: Deterministic checksum or QR failures must immediately force
-  // the confidence score down into the 15–25 range ("Likely Forged").
-  if (isTierAFailed) {
-    penaltiesApplied += 80;
-    score = Math.min(25, Math.max(15, score <= 25 ? (score < 15 ? 15 : score) : 20));
+  // Structural Template Positive-Match Layer (Requirement 3):
+  // If layout doesn't match any known template above similarity threshold,
+  // cap maximum possible score at 45 regardless of how clean other forensic checks appear.
+  const templateFailed = active.some(
+    (c) => c.checkName === "structural_template_matching" && c.result === "flag"
+  );
+  if (templateFailed) {
+    score = Math.min(45, score);
   }
 
   // 6. Final Verdict Mapping

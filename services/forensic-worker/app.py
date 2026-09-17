@@ -28,6 +28,7 @@ from modules.hf_detector import detect_ai_generation
 from modules.pixel_analyzer import run_pixel_analysis
 from modules.fusion_engine import fuse_scores
 from modules.pii_redactor import redact_pii_in_memory
+from modules.medical_validator import validate_medical_document
 
 os.environ.setdefault("ALLOW_SYNTHETIC_MODEL_INFERENCE", "true")
 
@@ -258,11 +259,22 @@ def run_fast_checks(
                 "provider": "local",
             })
 
+    # Medical Logic & Billing Verification
+    med_res = validate_medical_document(
+        text=extracted_text,
+        filename=filename,
+        document_type=document_type,
+    )
+    if document_type in ["medical_bill", "prescription", "scheme_document"] or med_res["category"] != "other":
+        checks.extend(med_res["checks"])
+        extracted_fields.update(med_res["extracted_fields"])
+
     return {
         "checks": checks,
         "extracted_fields": extracted_fields,
         "extracted_text": extracted_text,
         "sha256": hashlib.sha256(raw_bytes).hexdigest(),
+        "medical_validation": med_res,
     }
 
 

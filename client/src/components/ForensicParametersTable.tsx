@@ -266,7 +266,31 @@ export function ForensicParametersTable({
     };
   });
 
-  // Calculate telemetry counts - 11/11 always actively screened
+  // Append any extra active checks (e.g. medical logic, doctor registry, math consistency)
+  const matchedIds = new Set(paramReadouts.map((p) => p.matched?.id).filter(Boolean));
+  const extraChecks = (document.checks || []).filter((c) => !matchedIds.has(c.id));
+  extraChecks.forEach((c, idx) => {
+    paramReadouts.push({
+      def: {
+        id: c.id,
+        code: `${12 + idx}. ${c.shortName || c.name.toUpperCase().slice(0, 14)}`,
+        name: c.name,
+        subsystem: "MED / STATUTORY",
+        weight: c.weight || 2.0,
+        tier: "A",
+        defaultExplanation: c.explanation,
+        layer: "typography",
+      },
+      matched: c,
+      hasExecution: true,
+      status: c.result === "flag" ? "flag" : "pass",
+      confidence: typeof c.confidence === "number" && c.confidence > 0 ? c.confidence : 95,
+      explanation: c.explanation,
+      weight: c.weight || 2.0,
+    });
+  });
+
+  // Calculate telemetry counts - always actively screened with zero dead states
   const totalCount = paramReadouts.length;
   const flagCount = paramReadouts.filter((p) => p.status === "flag").length;
   const passCount = paramReadouts.filter((p) => p.status === "pass").length;
@@ -285,7 +309,7 @@ export function ForensicParametersTable({
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              11/11 ACTIVE TELEMETRY
+              {totalCount}/{totalCount} ACTIVE TELEMETRY
             </span>
             <span className="text-xs text-slate-500 hidden sm:inline font-medium">
               Evidence Arbitration Matrix

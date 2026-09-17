@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import Scan from "./pages/Scan";
 import Settings from "./pages/Settings";
 import Verify from "./pages/Verify";
+import BorderCheckpoint from "./pages/BorderCheckpoint";
 
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect } from "react";
@@ -36,7 +37,7 @@ function WorkspaceRoute({ children, allowGuest = true }: { children: React.React
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={BorderCheckpoint} />
       <Route path="/home" component={Home} />
       <Route path="/auth/login" component={Auth} />
       <Route path="/auth/register" component={Auth} />
@@ -53,6 +54,8 @@ function Router() {
       <Route path="/settings"><WorkspaceRoute><Settings /></WorkspaceRoute></Route>
       <Route path="/scan/:id"><WorkspaceRoute><Scan /></WorkspaceRoute></Route>
       <Route path="/report/:id"><WorkspaceRoute><Report /></WorkspaceRoute></Route>
+      <Route path="/border" component={BorderCheckpoint} />
+      <Route path="/border-checkpoint" component={BorderCheckpoint} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

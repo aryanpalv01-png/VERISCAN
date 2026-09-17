@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { GovMasthead } from "@/components/common/GovMasthead";
 import { Button } from "@/components/ui/button";
-import { demoDocuments } from "@/lib/veriscan";
+import { demoDocuments, analyzeDocumentFile, detectDocumentType } from "@/lib/veriscan";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   ArrowRight,
@@ -14,13 +14,15 @@ import {
   ShieldCheck,
   LogOut,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { writeLocalScan } from "@/lib/scanStore";
+import { toast } from "sonner";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isAuthenticated, logout } = useAuth();
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleLaunchSpecimen = (docId: string) => {
     const doc = demoDocuments.find((d) => d.id === docId);
@@ -30,9 +32,27 @@ export default function Home() {
     setLocation("/dashboard");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setLocation("/dashboard");
+      const file = e.target.files[0];
+      setIsUploading(true);
+      try {
+        const docType = detectDocumentType(file.name);
+        const doc = await analyzeDocumentFile(file, docType);
+        writeLocalScan(doc, user?.email || "guest");
+        toast.success("Specimen Ingested & Analyzed", {
+          description: `Telemetry score: ${doc.score}/100`,
+        });
+        setLocation(`/report/${doc.id}`);
+      } catch (err: any) {
+        console.error("Specimen intake error:", err);
+        toast.error("Ingestion failed", {
+          description: err.message || "Failed to analyze specimen file.",
+        });
+        setLocation("/verify");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -158,11 +178,12 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
+                  disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-11 px-5 rounded-xl border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm shadow-xs gap-2"
+                  className="h-11 px-5 rounded-xl border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm shadow-xs gap-2 disabled:opacity-50"
                 >
                   <UploadCloud className="h-4 w-4 text-indigo-600" />
-                  <span>Ingest Specimen</span>
+                  <span>{isUploading ? "Ingesting & Analyzing..." : "Ingest Specimen"}</span>
                 </Button>
 
                 <input

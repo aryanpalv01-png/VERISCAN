@@ -2,7 +2,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { DocumentUploadPanel } from "@/components/DocumentUploadPanel";
 import { trpc } from "@/lib/trpc";
 import { fileToBase64, writeLocalScan } from "@/lib/scanStore";
-import { analyzeDocumentDirectly, formatCheckName, getCheckCategory, VerificationDocument } from "@/lib/veriscan";
+import {
+  analyzeDocumentFile,
+  detectDocumentType,
+  DocumentKind,
+  formatCheckName,
+  getCheckCategory,
+  VerificationDocument,
+} from "@/lib/veriscan";
 
 import {
   ArrowLeft,
@@ -21,18 +28,20 @@ export default function Verify() {
   const currentFileRef = useRef<File | null>(null);
   const utils = trpc.useUtils();
 
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   const createScan = trpc.scans.create.useMutation({
     onSuccess: async (result) => {
       await utils.scans.list.invalidate();
-      setLocation(`/scan/${result.id}`);
+      setLocation(`/report/${result.id}`);
     },
     onError: async (error) => {
       console.warn("tRPC scan creation fallback to direct forensic analysis:", error);
       if (currentFileRef.current) {
         try {
-          const scan = await analyzeDocumentDirectly(currentFileRef.current);
+          const scan = await analyzeDocumentFile(currentFileRef.current);
           writeLocalScan(scan, userIdentifier);
-          setLocation(`/scan/${scan.id}`);
+          setLocation(`/report/${scan.id}`);
           return;
         } catch (directErr: any) {
           console.error("Direct forensic analysis error:", directErr);
@@ -45,80 +54,40 @@ export default function Verify() {
     },
   });
 
-  const handleFile = async (file: File) => {
+  const handleFile = async (file: File, documentType?: DocumentKind) => {
     setUploadError("");
+    setIsAnalyzing(true);
     currentFileRef.current = file;
-    const docType = file.name.toLowerCase().includes("aadhaar")
-      ? "aadhaar"
-      : file.name.toLowerCase().includes("pan")
-      ? "pan"
-      : file.name.toLowerCase().includes("passport")
-      ? "passport"
-      : "other";
+    const docType = documentType || detectDocumentType(file.name);
 
-    let previewUrl: string | undefined;
     try {
-      const contentBase64 = await fileToBase64(file);
-      previewUrl = `data:${file.type || "image/jpeg"};base64,${contentBase64}`;
-      createScan.mutate(
-        {
+      // 1. Direct Real Pipeline Ingestion via multipart/form-data
+      const analyzedDoc = await analyzeDocumentFile(file, docType);
+      writeLocalScan(analyzedDoc, userIdentifier);
+      toast.success("Specimen Analyzed", {
+        description: `Verified ${analyzedDoc.activeModulesCount || 11} modules with score ${analyzedDoc.score}/100`,
+      });
+      setLocation(`/report/${analyzedDoc.id}`);
+
+      // 2. Sync to server database if available
+      try {
+        const contentBase64 = await fileToBase64(file);
+        createScan.mutate({
           fileName: file.name,
-          mimeType: file.type,
+          mimeType: file.type || "image/jpeg",
           fileSize: file.size,
           documentType: docType,
           contentBase64,
-        },
-        {
-          onSuccess: (result: any) => {
-            const checksList = (result.checks || []).map((c: any, index: number) => ({
-              id: String(c.id || index + 1),
-              name: formatCheckName(c.checkName),
-              shortName: formatCheckName(c.checkName),
-              result: c.result,
-              confidence: c.confidence,
-              explanation: c.explanation,
-              flaggedRegion: c.flaggedRegion || c.flagged_region || undefined,
-              provider: c.provider,
-              providerState: result.providerHealth?.[c.provider] || "healthy",
-              category: getCheckCategory({ name: c.checkName, id: c.checkName } as any),
-              weight: c.weight,
-              effectiveWeight: c.effectiveWeight,
-            }));
-            const activeCount = typeof result.activeModulesCount === "number"
-              ? result.activeModulesCount
-              : checksList.filter((c: any) => c.result === "pass" || c.result === "flag").length;
-            const newDoc: VerificationDocument = {
-              id: String(result.id),
-              filename: file.name,
-              type: docType,
-              uploadedAt: new Date().toISOString(),
-              status: result.status,
-              score: result.confidenceScore ?? result.score ?? 0,
-              activeModulesCount: activeCount,
-              fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
-              mimeType: file.type || "image/jpeg",
-              reference: result.referenceCode,
-              previewUrl,
-              checks: checksList,
-              extractedFields: result.extractedFields,
-              comparisonFindings: result.comparisonFindings,
-              providerHealth: result.providerHealth,
-              summary: result.summary,
-            };
-            writeLocalScan(newDoc, userIdentifier);
-            setLocation(`/scan/${result.id}`);
-          },
-
-        }
-      );
-    } catch {
-      try {
-        const scan = await analyzeDocumentDirectly(file);
-        writeLocalScan(scan, userIdentifier);
-        setLocation(`/scan/${scan.id}`);
-      } catch (directErr: any) {
-        setUploadError(directErr.message || "Failed to process document");
+        });
+      } catch {
+        // Local scan is already active
       }
+    } catch (err: any) {
+      console.error("Direct specimen analysis error:", err);
+      setUploadError(err.message || "Failed to process document");
+      toast.error("Analysis Error", { description: err.message || "Pipeline execution failed." });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -160,7 +129,7 @@ export default function Verify() {
               </span>
             </div>
 
-            <DocumentUploadPanel disabled={createScan.isPending} onFile={handleFile} />
+            <DocumentUploadPanel disabled={createScan.isPending || isAnalyzing} onFile={handleFile} />
 
             {uploadError && (
               <p

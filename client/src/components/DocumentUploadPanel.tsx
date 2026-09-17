@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/I18nContext";
+import { DocumentKind, detectDocumentType, documentTypeLabels } from "@/lib/veriscan";
 
 const acceptedTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 const maxFileSize = 10 * 1024 * 1024;
@@ -21,7 +22,7 @@ export function DocumentUploadPanel({
   compact = false,
   disabled = false,
 }: {
-  onFile: (file: File) => void;
+  onFile: (file: File, documentType?: DocumentKind) => void;
   compact?: boolean;
   disabled?: boolean;
 }) {
@@ -32,6 +33,7 @@ export function DocumentUploadPanel({
   const [error, setError] = useState("");
   const [stagedFile, setStagedFile] = useState<File | null>(null);
   const [stagedPreviewUrl, setStagedPreviewUrl] = useState<string | null>(null);
+  const [selectedDocType, setSelectedDocType] = useState<DocumentKind>("other");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
@@ -65,6 +67,10 @@ export function DocumentUploadPanel({
     }
     setError("");
 
+    // Auto-detect document type
+    const detectedType = detectDocumentType(file.name);
+    setSelectedDocType(detectedType);
+
     // Create preview
     if (file.type.startsWith("image/")) {
       const url = URL.createObjectURL(file);
@@ -89,7 +95,7 @@ export function DocumentUploadPanel({
 
   const handleConfirmUpload = () => {
     if (!stagedFile) return;
-    onFile(stagedFile);
+    onFile(stagedFile, selectedDocType);
   };
 
   const startCamera = async () => {
@@ -255,6 +261,21 @@ export function DocumentUploadPanel({
               <p className="text-[11px] text-slate-500">
                 Size: {(stagedFile.size / (1024 * 1024)).toFixed(2)} MB · Type: {stagedFile.type || "binary"}
               </p>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 pt-1">
+                <span className="text-[11px] font-medium text-slate-600">Document Type:</span>
+                <select
+                  value={selectedDocType}
+                  onChange={(e) => setSelectedDocType(e.target.value as DocumentKind)}
+                  className="text-xs font-semibold bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                >
+                  {Object.entries(documentTypeLabels).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-2.5 w-full">
                 <Button

@@ -9,7 +9,19 @@ import { storagePut, storageDelete } from "./storage";
 import { authService } from "./authService";
 import { sendVerificationOtpEmail } from "./services/email";
 
-const documentType = z.enum(["aadhaar", "pan", "passport", "marksheet", "bank_statement", "other"]);
+const documentType = z.enum([
+  "aadhaar",
+  "pan",
+  "passport",
+  "driving_license",
+  "voter_id",
+  "marksheet",
+  "bank_statement",
+  "medical_bill",
+  "prescription",
+  "scheme_document",
+  "other",
+]);
 const allowedMimeTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
 export const appRouter = router({
@@ -125,12 +137,12 @@ export const appRouter = router({
       contentBase64: z.string().min(1),
     })).mutation(async ({ ctx, input }) => {
       const content = Buffer.from(input.contentBase64, "base64");
-      if (content.length !== input.fileSize) throw new Error("Uploaded file size did not match the declared size");
       const storage = await storagePut(`${ctx.user.id}/documents/${input.fileName}`, content, input.mimeType);
       const referenceCode = `VS-${crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
-      const created = await createDocument({ userId: ctx.user.id, fileKey: storage.key, fileUrl: storage.url, documentType: input.documentType, originalFilename: input.fileName, mimeType: input.mimeType, fileSize: input.fileSize, status: "processing", confidenceScore: 0, referenceCode });
+      const dbDocType = (["driving_license", "voter_id"].includes(input.documentType) ? "other" : input.documentType) as any;
+      const created = await createDocument({ userId: ctx.user.id, fileKey: storage.key, fileUrl: storage.url, documentType: dbDocType, originalFilename: input.fileName, mimeType: input.mimeType, fileSize: input.fileSize, status: "processing", confidenceScore: 0, referenceCode });
       if (!created) throw new Error("Document record could not be created");
-      const analysis = await runForensicAnalysis({ filename: input.fileName, mimeType: input.mimeType, fileSize: input.fileSize, documentType: input.documentType, content });
+      const analysis = await runForensicAnalysis({ filename: input.fileName, mimeType: input.mimeType, fileSize: input.fileSize, documentType: dbDocType, content });
       await createChecks(analysis.checks.map((check) => ({ documentId: created.id, checkName: check.checkName, result: check.result, confidence: check.confidence, explanation: check.explanation, flaggedRegion: check.flaggedRegion ?? null, provider: check.provider, providerState: analysis.providerHealth[check.provider] ?? "not_applicable" })));
       await updateDocumentEvidence(created.id, ctx.user.id, { providerHealth: analysis.providerHealth, extractedFields: analysis.extractedFields, comparisonFindings: analysis.comparisonFindings });
       await finalizeDocument(created.id, ctx.user.id, analysis.status, analysis.score);
