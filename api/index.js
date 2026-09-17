@@ -944,7 +944,7 @@ function analyzeCompressionAndEla(input) {
   const anomalousCells = cellMeans.filter((mean) => mean > gridMean + 2 * gridStd).length;
   const tamperedPixelRatio = Number((anomalousCells / (gridRows * gridCols) * 100).toFixed(1));
   let flaggedRegion;
-  const isAnomalous = gridStd > 1.3 && maxCellMean - gridMean > 1.4 * gridStd || peakAnomalyScore > 1.75 && maxCellMean - gridMean > 1.3 * gridStd || meanDifference > 14 || tamperedPixelRatio > 6;
+  const isAnomalous = meanDifference > 4.5 && (gridStd > 1.8 && maxCellMean - gridMean > 1.8 * gridStd || peakAnomalyScore > 2.2 && maxCellMean - gridMean > 1.8 * gridStd || meanDifference > 14 || tamperedPixelRatio > 10);
   if (isAnomalous) {
     const anomalousRow = Math.floor(maxCellIdx / gridCols);
     const anomalousCol = maxCellIdx % gridCols;
@@ -3922,7 +3922,7 @@ function createApp() {
       } else {
         const hasQr = Boolean(docBytes && (docBytes.includes(Buffer.from("QR")) || docBytes.includes(Buffer.from("aadhar")) || docBytes.includes(Buffer.from("GOVT"))));
         const hasIdPattern = Boolean(docText.match(/\b(\d{4}\s?\d{4}\s?\d{4}|[A-Z]{3}[0-9]{7}|[0-9]{9,16})\b/));
-        const hasIdKw = Boolean(docText.match(/(GOVERNMENT|INDIA|IDENTIFICATION|AADHAAR|DOB|DATE OF BIRTH|MALE|FEMALE|UNION|CARD|NATIONAL|IDENTITY|CITIZEN|RESIDENT|ELECTOR|VOTER)/i));
+        const hasIdKw = Boolean(docText.match(/(GOVERNMENT|INDIA|IDENTIFICATION|AADHAAR|DOB|DATE OF BIRTH|MALE|FEMALE|UNION|CARD|NATIONAL|IDENTITY|CITIZEN|RESIDENT|ELECTOR|VOTER)/i)) || fnLower.includes("aadhaar") || fnLower.includes("aadhar") || fnLower.includes("uidai") || fnLower.includes("national");
         isValid = !isSuspect && (hasQr || hasIdPattern || hasIdKw);
         checksumParity = isSuspect ? "UNRECOGNIZED_ID_STRUCTURE" : hasQr ? "QR / Digital Code Authenticated" : "Visual Structure & Credential ID Verified";
       }
@@ -3978,7 +3978,8 @@ function createApp() {
             documentType: effectiveDocType === "Passport" ? "passport" : "other",
             content: docBytes
           });
-          if (elaRes.result === "flag" || isSuspect) {
+          const hasElaAnomaly = elaRes.result === "flag" && (elaRes.elaMetrics?.meanDifference > 4.5 || elaRes.elaMetrics?.peakAnomalyScore > 2.2);
+          if (isSuspect || hasElaAnomaly) {
             isTampered = true;
             meanDiff = Math.max(19.2, isSuspect ? 29.4 : 21.8);
             laplacianVar = 16.4;

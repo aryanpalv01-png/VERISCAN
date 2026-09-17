@@ -388,10 +388,12 @@ export function analyzeCompressionAndEla(input: ForensicInput): ForensicModuleRe
   const tamperedPixelRatio = Number(((anomalousCells / (gridRows * gridCols)) * 100).toFixed(1));
 
   let flaggedRegion: AnalysisRegion | undefined;
-  const isAnomalous = (gridStd > 1.3 && (maxCellMean - gridMean) > 1.4 * gridStd) ||
-                      (peakAnomalyScore > 1.75 && (maxCellMean - gridMean) > 1.3 * gridStd) ||
-                      meanDifference > 14.0 ||
-                      tamperedPixelRatio > 6.0;
+  const isAnomalous = meanDifference > 4.5 && (
+    (gridStd > 1.8 && (maxCellMean - gridMean) > 1.8 * gridStd) ||
+    (peakAnomalyScore > 2.2 && (maxCellMean - gridMean) > 1.8 * gridStd) ||
+    meanDifference > 14.0 ||
+    tamperedPixelRatio > 10.0
+  );
 
   if (isAnomalous) {
     const anomalousRow = Math.floor(maxCellIdx / gridCols);

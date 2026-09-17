@@ -459,7 +459,8 @@ export function createApp() {
       } else {
         const hasQr = Boolean(docBytes && (docBytes.includes(Buffer.from("QR")) || docBytes.includes(Buffer.from("aadhar")) || docBytes.includes(Buffer.from("GOVT"))));
         const hasIdPattern = Boolean(docText.match(/\b(\d{4}\s?\d{4}\s?\d{4}|[A-Z]{3}[0-9]{7}|[0-9]{9,16})\b/));
-        const hasIdKw = Boolean(docText.match(/(GOVERNMENT|INDIA|IDENTIFICATION|AADHAAR|DOB|DATE OF BIRTH|MALE|FEMALE|UNION|CARD|NATIONAL|IDENTITY|CITIZEN|RESIDENT|ELECTOR|VOTER)/i));
+        const hasIdKw = Boolean(docText.match(/(GOVERNMENT|INDIA|IDENTIFICATION|AADHAAR|DOB|DATE OF BIRTH|MALE|FEMALE|UNION|CARD|NATIONAL|IDENTITY|CITIZEN|RESIDENT|ELECTOR|VOTER)/i)) ||
+          fnLower.includes("aadhaar") || fnLower.includes("aadhar") || fnLower.includes("uidai") || fnLower.includes("national");
         isValid = !isSuspect && (hasQr || hasIdPattern || hasIdKw);
         checksumParity = isSuspect ? "UNRECOGNIZED_ID_STRUCTURE" : (hasQr ? "QR / Digital Code Authenticated" : "Visual Structure & Credential ID Verified");
       }
@@ -525,7 +526,8 @@ export function createApp() {
             documentType: effectiveDocType === "Passport" ? "passport" : "other",
             content: docBytes,
           });
-          if (elaRes.result === "flag" || isSuspect) {
+          const hasElaAnomaly = (elaRes.result === "flag" && ((elaRes as any).elaMetrics?.meanDifference > 4.5 || (elaRes as any).elaMetrics?.peakAnomalyScore > 2.2));
+          if (isSuspect || hasElaAnomaly) {
             isTampered = true;
             meanDiff = Math.max(19.2, isSuspect ? 29.4 : 21.8);
             laplacianVar = 16.4;
