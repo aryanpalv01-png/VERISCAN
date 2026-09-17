@@ -37,6 +37,7 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { AshokaChakra } from "./VeriScanLogo";
 import { GovMasthead } from "./common/GovMasthead";
+import { useI18n } from "@/contexts/I18nContext";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
@@ -150,6 +151,16 @@ function DashboardLayoutContent({
   const isMobile = useIsMobile();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
+  const { t } = useI18n();
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: t("nav_dashboard"), path: "/dashboard" },
+    { icon: ShieldCheck, label: t("nav_border"), path: "/border" },
+    { icon: FileSearch, label: t("nav_verify"), path: "/verify" },
+    { icon: FileCheck2, label: "Verdicts & Reports", path: "/reports" },
+    { icon: History, label: t("nav_history"), path: "/history" },
+    { icon: Settings2, label: t("nav_settings"), path: "/settings" },
+  ];
 
   const activeMenuItem =
     menuItems.find(

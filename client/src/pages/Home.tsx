@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { GovMasthead } from "@/components/common/GovMasthead";
 import { Button } from "@/components/ui/button";
-import { demoDocuments, analyzeDocumentFile, detectDocumentType } from "@/lib/veriscan";
+import { analyzeDocumentFile, detectDocumentType } from "@/lib/veriscan";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   BorderVerificationResponse,
@@ -22,25 +22,39 @@ import {
   RefreshCw,
   FileText,
   Sparkles,
+  Layers,
+  Lock,
+  Search,
+  Fingerprint,
+  FileCheck,
+  Cpu,
+  BadgeAlert,
+  HelpCircle,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { writeLocalScan } from "@/lib/scanStore";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isAuthenticated, logout } = useAuth();
+  const { t, language } = useI18n();
   const [isUploading, setIsUploading] = useState(false);
+
+  // Active specimen tab for the Methodology interactive comparator
+  const [activeSpecimenTab, setActiveSpecimenTab] = useState<"genuine" | "forged">("genuine");
 
   // Live Border Terminal State
   const [terminalFile, setTerminalFile] = useState<File | null>(null);
-  const [terminalDocType, setTerminalDocType] = useState<string>("Passport");
+  const [terminalDocType, setTerminalDocType] = useState<string>("National ID");
   const [terminalLoading, setTerminalLoading] = useState<boolean>(false);
   const [terminalResult, setTerminalResult] = useState<BorderVerificationResponse | null>({
     status: "success",
     document_type: "National ID",
-    trust_score: 98,
+    trust_score: 96,
     verdict: "CLEAR_ENTRY",
     tier_a_override: false,
     modules_breakdown: {
@@ -79,9 +93,15 @@ export default function Home() {
     try {
       const data = await verifyBorderDocument(activeFile, activeClass);
       setTerminalResult(data);
-      toast.success("Forensic Screening Complete", {
-        description: `Direct score: ${data.trust_score}/100 · Verdict: ${data.verdict === "CLEAR_ENTRY" ? "Clear Entry" : "Hold for Inspection"}`,
-      });
+      if (data.verdict === "CLEAR_ENTRY") {
+        toast.success("Forensic Screening: Genuine Profile Verified", {
+          description: "All statutory cryptographic signatures, checksums, and pixel matrices passed.",
+        });
+      } else {
+        toast.error("Forensic Screening: Anomaly Flagged", {
+          description: "Hold for inspection. Potential splicing, flat screen recompression, or checksum failure detected.",
+        });
+      }
     } catch (err: any) {
       console.error("Terminal screening error:", err);
       toast.error("Screening calculation error", {
@@ -98,12 +118,13 @@ export default function Home() {
     setTerminalFile(null);
 
     if (specimenId === "aadhaar_rahul_sharma") {
+      setActiveSpecimenTab("genuine");
       setTerminalDocType("National ID");
       setPreviewImage("/test_samples/sample_aadhaar.png");
       setTerminalResult({
         status: "success",
         document_type: "National ID",
-        trust_score: 98,
+        trust_score: 96,
         verdict: "CLEAR_ENTRY",
         tier_a_override: false,
         modules_breakdown: {
@@ -125,14 +146,15 @@ export default function Home() {
           },
         },
       });
-      toast.success("Loaded Genuine Aadhaar Specimen", { description: "Trust Score: 98/100 · All 11 checks passed." });
+      toast.success("Loaded Genuine Aadhaar Specimen", { description: "Cryptographic signature & Verhoeff matrix verified." });
     } else if (specimenId === "pan_rohit_patel") {
+      setActiveSpecimenTab("genuine");
       setTerminalDocType("PAN Card");
       setPreviewImage("/test_samples/sample_pan.png");
       setTerminalResult({
         status: "success",
         document_type: "PAN Card",
-        trust_score: 96,
+        trust_score: 95,
         verdict: "CLEAR_ENTRY",
         tier_a_override: false,
         modules_breakdown: {
@@ -154,14 +176,15 @@ export default function Home() {
           },
         },
       });
-      toast.success("Loaded Clean PAN Specimen", { description: "Trust Score: 96/100 · Statutory tax structure verified." });
+      toast.success("Loaded Clean PAN Specimen", { description: "Statutory tax structure & font baselines verified." });
     } else if (specimenId === "passport_standard") {
+      setActiveSpecimenTab("genuine");
       setTerminalDocType("Passport");
       setPreviewImage("/test_samples/sample_aadhaar.png");
       setTerminalResult({
         status: "success",
         document_type: "Passport",
-        trust_score: 97,
+        trust_score: 96,
         verdict: "CLEAR_ENTRY",
         tier_a_override: false,
         modules_breakdown: {
@@ -183,22 +206,24 @@ export default function Home() {
           },
         },
       });
-      toast.success("Loaded ICAO 9303 Passport Specimen", { description: "Trust Score: 97/100 · 7-3-1 matrix verified." });
+      toast.success("Loaded ICAO 9303 Passport Specimen", { description: "7-3-1 MRZ weight matrix validated." });
     } else if (specimenId === "aadhaar_tampered_priya") {
+      setActiveSpecimenTab("forged");
       setTerminalDocType("National ID");
       setPreviewImage("/test_samples/sample_aadhaar.png");
       setTerminalResult({
         status: "success",
         document_type: "National ID",
-        trust_score: 34,
+        trust_score: 22,
         verdict: "HOLD_FOR_MANUAL_INSPECTION",
-        tier_a_override: false,
+        tier_a_override: true,
+        tier_a_failure_reason: "CRITICAL_TIER_A: Spliced demographic digits failed Verhoeff checksum parity.",
         modules_breakdown: {
           module_1_ocr: { extracted_snippet: "UIDAI AADHAAR · ANOMALOUS KERNING · 9182 3412 8891" },
           module_2_validation: {
             valid: false,
             checksum_parity: "PARITY_FAIL_SPLICED_DIGITS",
-            compliance: "Non-Compliant Checksum Sequence",
+            compliance: "Non-Compliant Checksum Sequence (Tier A Veto)",
           },
           module_3_tampering: {
             tampered: true,
@@ -208,11 +233,11 @@ export default function Home() {
           },
           module_4_face_verification: {
             match_score: "42.0%",
-            liveness_check: "Failed (Synthetic Replay Artifacts)",
+            liveness_check: "Failed (Synthetic Replay / Flat Screen)",
           },
         },
       });
-      toast.error("Loaded Tampered Specimen", { description: "Trust Score: 34/100 · Splicing Anomaly Detected!" });
+      toast.error("Loaded Tampered Specimen", { description: "Splicing & Checksum Anomaly Detected (Tier A Veto)" });
     }
   };
 
@@ -249,11 +274,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Official Government Masthead */}
+      {/* Official Government Masthead with Language Switcher */}
       <GovMasthead theme="light" />
 
-      {/* Main Clean Navigation Bar with Full User Authentication */}
-      <nav className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+      {/* Main Navigation Bar */}
+      <nav className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 h-16">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-base shadow-xs">
@@ -275,14 +300,14 @@ export default function Home() {
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  {user?.email || "Officer"}
+                  {user?.email || t("officer")}
                 </span>
                 <Button
                   size="sm"
                   onClick={() => setLocation("/dashboard")}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs hover:shadow transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
                 >
-                  <span>Command Center</span>
+                  <span>{t("nav_dashboard")}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
                 <Button
@@ -294,7 +319,7 @@ export default function Home() {
                   className="text-xs font-semibold text-slate-600 hover:text-slate-900 h-8 px-2.5 rounded-lg gap-1 cursor-pointer"
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Sign Out</span>
+                  <span className="hidden sm:inline">{t("sign_out")}</span>
                 </Button>
               </div>
             ) : (
@@ -306,7 +331,7 @@ export default function Home() {
                   className="text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg gap-1.5 h-8 px-3 cursor-pointer"
                 >
                   <LogIn className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Login</span>
+                  <span>{t("login")}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -315,14 +340,14 @@ export default function Home() {
                   className="text-xs font-semibold text-indigo-700 border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 rounded-lg shadow-xs gap-1.5 h-8 px-3 cursor-pointer"
                 >
                   <UserPlus className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Register</span>
+                  <span>{t("register")}</span>
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => setLocation("/dashboard")}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs hover:shadow transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
                 >
-                  <span>Command Center</span>
+                  <span>{t("nav_dashboard")}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </>
@@ -333,7 +358,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <div className="relative overflow-hidden pt-10 pb-12 sm:pt-14 sm:pb-16">
+        <div className="relative overflow-hidden pt-10 pb-10 sm:pt-14 sm:pb-12 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/70">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="text-center max-w-3xl mx-auto space-y-4">
               {/* Live Status Pill */}
@@ -342,27 +367,27 @@ export default function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
-                <span>INSTITUTIONAL FORENSIC SCREENING ENGINE</span>
+                <span>{t("hero_badge")}</span>
               </div>
 
-              {/* Ultra-Clean Headline */}
+              {/* Multilingual Headline */}
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-                Automated Document Forensic & Tampering Localization
+                {t("hero_title")}
               </h1>
 
-              {/* Minimalist Subtitle */}
+              {/* Subtitle */}
               <p className="text-base sm:text-lg text-slate-600 font-normal leading-relaxed max-w-2xl mx-auto">
-                11 automated verification modules evaluating compression anomalies, typography consistency, and cryptographic signatures.
+                {t("hero_subtitle")}
               </p>
 
-              {/* Primary Direct Action Triggers */}
+              {/* Action Triggers */}
               <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                 <Button
                   size="lg"
                   onClick={() => setLocation("/dashboard")}
                   className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow transition-all gap-2 cursor-pointer"
                 >
-                  <span>Open Forensic Command Center</span>
+                  <span>{t("btn_open_workspace")}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
 
@@ -374,7 +399,7 @@ export default function Home() {
                   className="h-11 px-5 rounded-xl border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm shadow-xs gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   <UploadCloud className="h-4 w-4 text-indigo-600" />
-                  <span>{isUploading ? "Ingesting & Analyzing..." : "Ingest Specimen File"}</span>
+                  <span>{isUploading ? t("btn_analyzing") : t("btn_ingest_file")}</span>
                 </Button>
 
                 <input
@@ -387,15 +412,15 @@ export default function Home() {
               </div>
 
               {/* Officer Portal Gateway */}
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-white shadow-xs">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
                     <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                    <span>Officer Portal:</span>
+                    <span>{t("officer_portal")}</span>
                   </div>
                   {isAuthenticated ? (
                     <span className="text-xs font-semibold text-emerald-700">
-                      Signed in as {user?.email || "Officer"}
+                      {t("signed_in_as")} {user?.email || t("officer")}
                     </span>
                   ) : (
                     <>
@@ -406,7 +431,7 @@ export default function Home() {
                         className="h-7 px-2.5 text-xs font-bold text-slate-800 hover:text-indigo-600 hover:bg-slate-100 rounded-lg gap-1 cursor-pointer"
                       >
                         <LogIn className="h-3.5 w-3.5 text-indigo-600" />
-                        <span>Login</span>
+                        <span>{t("login")}</span>
                       </Button>
                       <span className="text-slate-200">|</span>
                       <Button
@@ -416,7 +441,7 @@ export default function Home() {
                         className="h-7 px-2.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50/60 border-indigo-200 hover:bg-indigo-100 rounded-lg gap-1 cursor-pointer shadow-xs"
                       >
                         <UserPlus className="h-3.5 w-3.5 text-indigo-600" />
-                        <span>Register</span>
+                        <span>{t("register")}</span>
                       </Button>
                     </>
                   )}
@@ -424,418 +449,468 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Metric Telemetry Cards */}
-            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-              <div className="p-4 rounded-xl border border-slate-200/80 bg-white shadow-xs text-center">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">11/11</div>
-                <div className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Forensic Engines</div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-200/80 bg-white shadow-xs text-center">
-                <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600 tracking-tight">&lt; 1.2s</div>
-                <div className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Pipeline Latency</div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-200/80 bg-white shadow-xs text-center">
-                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">0</div>
-                <div className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Dead N/A States</div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-200/80 bg-white shadow-xs text-center">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">2048-bit</div>
-                <div className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">RSA Trust Chain</div>
-              </div>
-            </div>
-
-            {/* Live Apple-Grade Screening Terminal Workspace */}
-            <div className="mt-10 max-w-5xl mx-auto rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm">
-              {/* Header Row */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 mb-5 gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                  </span>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                      Live Forensic Border Screening Terminal
-                    </h2>
-                    <span className="text-[11px] text-slate-400">
-                      Real-time statutory verification & pixel forgery detection
-                    </span>
+            {/* Hero Footer / Institutional Trust Ribbon */}
+            <div className="mt-8 pt-6 border-t border-slate-200/80 max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
+                  <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                    <ShieldCheck className="h-4 w-4" />
                   </div>
+                  <span className="font-semibold leading-tight">{t("hero_footer_zero_disk")}</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setLocation("/border")}
-                    className="text-xs font-semibold text-slate-700 hover:text-indigo-600 h-8 gap-1.5 cursor-pointer"
-                  >
-                    <span>Full Screen Mode</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setLocation("/dashboard")}
-                    className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white h-8 gap-1.5 cursor-pointer"
-                  >
-                    <span>Dashboard</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Quick Test Specimen Launcher Row */}
-              <div className="mb-6 p-3 rounded-xl bg-slate-50 border border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                  <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Quick Test Specimens:</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    onClick={() => handleLaunchSpecimen("aadhaar_rahul_sharma")}
-                    className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                      selectedSpecimenId === "aadhaar_rahul_sharma"
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                    }`}
-                  >
-                    Aadhaar (Genuine)
-                  </button>
-                  <button
-                    onClick={() => handleLaunchSpecimen("pan_rohit_patel")}
-                    className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                      selectedSpecimenId === "pan_rohit_patel"
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                    }`}
-                  >
-                    PAN (Clean)
-                  </button>
-                  <button
-                    onClick={() => handleLaunchSpecimen("passport_standard")}
-                    className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                      selectedSpecimenId === "passport_standard"
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
-                    }`}
-                  >
-                    Passport (ICAO)
-                  </button>
-                  <button
-                    onClick={() => handleLaunchSpecimen("aadhaar_tampered_priya")}
-                    className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                      selectedSpecimenId === "aadhaar_tampered_priya"
-                        ? "bg-rose-600 text-white border-rose-600 shadow-xs"
-                        : "bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100"
-                    }`}
-                  >
-                    Tampered Specimen
-                  </button>
-                </div>
-              </div>
-
-              {/* 2-Column Split Workspace */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                {/* Left Column: Specimen Intake */}
-                <div className="md:col-span-5 rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 sm:p-5 flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Document Intake
-                      </h3>
-                      <span className="text-[11px] font-semibold text-slate-500">
-                        STEP 01
-                      </span>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                        Document Class
-                      </label>
-                      <select
-                        value={terminalDocType}
-                        onChange={(e) => setTerminalDocType(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
-                      >
-                        <option value="Passport">Passport (ICAO 9303)</option>
-                        <option value="National ID">National Identity Card / Aadhaar</option>
-                        <option value="Driving License">Driving License</option>
-                        <option value="PAN Card">PAN Card</option>
-                        <option value="Visa">Travel Visa Document</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                        Document Specimen
-                      </label>
-                      <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 bg-white rounded-xl p-4 hover:border-indigo-500/50 hover:bg-indigo-50/20 transition cursor-pointer group">
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              const f = e.target.files[0];
-                              setTerminalFile(f);
-                              setSelectedSpecimenId(null);
-                              setPreviewImage(URL.createObjectURL(f));
-                              handleExecuteScreening(f, terminalDocType);
-                            }
-                          }}
-                        />
-                        {previewImage ? (
-                          <div className="relative aspect-[16/10] w-full max-h-32 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center mb-2">
-                            <img
-                              src={previewImage}
-                              alt="Specimen Preview"
-                              className="max-h-full max-w-full object-contain p-1"
-                            />
-                          </div>
-                        ) : (
-                          <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-indigo-600 transition mb-2" />
-                        )}
-                        <span className="text-xs font-semibold text-slate-700 text-center">
-                          {terminalFile ? terminalFile.name : selectedSpecimenId ? "Specimen Loaded" : "Click to browse or drop file"}
-                        </span>
-                        <span className="text-[10.5px] text-slate-400 mt-0.5">
-                          PNG, JPG, or PDF scan
-                        </span>
-                      </label>
-                    </div>
-
-                    <Button
-                      type="button"
-                      disabled={terminalLoading}
-                      onClick={() => handleExecuteScreening()}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-xl text-xs transition shadow-xs gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      {terminalLoading ? (
-                        <>
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                          <span>Analyzing Telemetry...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Crosshair className="h-3.5 w-3.5" />
-                          <span>Execute Forensic Screening</span>
-                        </>
-                      )}
-                    </Button>
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
+                  <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                    <Lock className="h-4 w-4" />
                   </div>
-
-                  <div className="text-[10.5px] text-slate-400 border-t border-slate-200/60 pt-3 mt-4 text-center">
-                    Zero-Retention Cryptographic Protocol · 256-bit SHA Verification
-                  </div>
+                  <span className="font-semibold leading-tight">{t("hero_footer_sha")}</span>
                 </div>
 
-                {/* Right Column: Decision Support & Telemetry */}
-                <div className="md:col-span-7 rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 sm:p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center border-b border-slate-200/60 pb-3 mb-4">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Officer Decision Support
-                      </h3>
-                      <span className="text-[11px] font-semibold text-slate-500">
-                        STEP 02
-                      </span>
-                    </div>
-
-                    {terminalResult ? (
-                      <div className="space-y-3.5">
-                        {/* Directive Card */}
-                        <div
-                          className={`p-4 rounded-xl border flex items-center justify-between ${
-                            terminalResult.verdict === "CLEAR_ENTRY"
-                              ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
-                              : "bg-rose-50/80 border-rose-200 text-rose-900"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`h-9 w-9 rounded-lg flex items-center justify-center ${
-                                terminalResult.verdict === "CLEAR_ENTRY"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-rose-600 text-white"
-                              }`}
-                            >
-                              {terminalResult.verdict === "CLEAR_ENTRY" ? (
-                                <CheckCircle2 className="h-5 w-5" />
-                              ) : (
-                                <AlertTriangle className="h-5 w-5" />
-                              )}
-                            </div>
-                            <div>
-                              <span className="text-[10px] font-bold tracking-wider uppercase opacity-75 block">
-                                Directive
-                              </span>
-                              <span className="text-base font-extrabold tracking-tight">
-                                {terminalResult.verdict === "CLEAR_ENTRY"
-                                  ? "Clear Entry Authorized"
-                                  : "Hold for Manual Inspection"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <span className="text-[10px] font-bold tracking-wider uppercase opacity-75 block">
-                              Trust Score
-                            </span>
-                            <span
-                              className={`text-2xl font-black tracking-tight ${
-                                terminalResult.verdict === "CLEAR_ENTRY"
-                                  ? "text-emerald-700"
-                                  : "text-rose-700"
-                              }`}
-                            >
-                              {terminalResult.trust_score}/100
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Telemetry Breakdown Matrix */}
-                        <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-xs">
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-[11px] font-bold text-slate-700">
-                            <span className="flex items-center gap-1.5">
-                              <Activity className="h-3.5 w-3.5 text-indigo-600" />
-                              <span>Forensic Telemetry Breakdown</span>
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                terminalResult.verdict === "CLEAR_ENTRY"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-rose-50 text-rose-700 border border-rose-200"
-                              }`}
-                            >
-                              {terminalResult.verdict === "CLEAR_ENTRY" ? "PASS" : "FLAGGED"}
-                            </span>
-                          </div>
-
-                          {/* Item 1: OCR */}
-                          <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-[11px]">
-                            <span className="text-slate-500 font-medium">OCR Extraction:</span>
-                            <span className="font-semibold text-slate-800 truncate max-w-[220px] sm:max-w-[280px]">
-                              {terminalResult.modules_breakdown?.module_1_ocr?.extracted_snippet || "Parsed Optical Stream"}
-                            </span>
-                          </div>
-
-                          {/* Item 2: Validation */}
-                          <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-[11px]">
-                            <span className="text-slate-500 font-medium">Structure & Checksum:</span>
-                            <span
-                              className={`font-semibold ${
-                                terminalResult.modules_breakdown?.module_2_validation?.valid
-                                  ? "text-slate-800"
-                                  : "text-rose-600"
-                              }`}
-                            >
-                              {terminalResult.modules_breakdown?.module_2_validation?.checksum_parity || "Verified"}
-                            </span>
-                          </div>
-
-                          {/* Item 3: Tampering */}
-                          <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-[11px]">
-                            <span className="text-slate-500 font-medium">Pixel ELA Integrity:</span>
-                            <span
-                              className={`font-semibold ${
-                                terminalResult.modules_breakdown?.module_3_tampering?.tampered
-                                  ? "text-rose-600"
-                                  : "text-emerald-600"
-                              }`}
-                            >
-                              {terminalResult.modules_breakdown?.module_3_tampering?.tampered
-                                ? "Compression Anomaly Detected"
-                                : "Pristine Pixel Integrity"}
-                            </span>
-                          </div>
-
-                          {/* Item 4: Biometrics */}
-                          <div className="flex justify-between items-center py-1 text-[11px]">
-                            <span className="text-slate-500 font-medium">Biometrics & Liveness:</span>
-                            <span className="font-semibold text-slate-800">
-                              {terminalResult.modules_breakdown?.module_4_face_verification?.match_score || "97.1%"} ·{" "}
-                              {terminalResult.modules_breakdown?.module_4_face_verification?.liveness_check || "Live 3D"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="pt-1 flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setLocation("/dashboard")}
-                            className="h-8 text-xs font-semibold text-indigo-600 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 rounded-lg gap-1.5 cursor-pointer"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                            <span>Deep Command Center View</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-slate-400 text-center py-14 text-xs bg-white rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2">
-                        <Crosshair className="h-6 w-6 text-slate-300" />
-                        <span>Awaiting document ingest for real-time telemetry...</span>
-                        <span className="text-[11px] text-slate-400">
-                          Select a test specimen above or upload a document file
-                        </span>
-                      </div>
-                    )}
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
+                  <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                    <FileCheck className="h-4 w-4" />
                   </div>
+                  <span className="font-semibold leading-tight">{t("hero_footer_standards")}</span>
+                </div>
 
-                  <div className="text-[11px] text-slate-400 border-t border-slate-200/60 pt-3 mt-4 flex justify-between items-center">
-                    <span>Node: CHK-04-DEL</span>
-                    <span className="font-mono text-[10px]">BUILD // 2.4.0-PROD</span>
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
+                  <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                    <Cpu className="h-4 w-4" />
                   </div>
+                  <span className="font-semibold leading-tight">{t("hero_footer_iso")}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Forensic Methodology Section: Differentiating Real vs. Fake Documents */}
+        <section className="py-14 sm:py-18 bg-white border-b border-slate-200/80">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold shadow-xs mb-3">
+                <Layers className="h-3.5 w-3.5 text-indigo-600" />
+                <span>{t("methodology_badge")}</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                {t("methodology_title")}
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+                {t("methodology_subtitle")}
+              </p>
+            </div>
+
+            {/* 6 Core Pillars Side-by-Side Comparison Matrix */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Pillar 1: ELA */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-2 rounded-xl bg-indigo-100/80 text-indigo-700">
+                      <Search className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {t("pillar_1_name")}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                      <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{t("methodology_real_title")}</span>
+                      </div>
+                      <p className="text-emerald-900/90 leading-relaxed">
+                        {t("pillar_1_real")}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+                      <div className="font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                        <span>{t("methodology_fake_title")}</span>
+                      </div>
+                      <p className="text-rose-900/90 leading-relaxed">
+                        {t("pillar_1_fake")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pillar 2: Typography */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-2 rounded-xl bg-blue-100/80 text-blue-700">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {t("pillar_2_name")}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                      <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{t("methodology_real_title")}</span>
+                      </div>
+                      <p className="text-emerald-900/90 leading-relaxed">
+                        {t("pillar_2_real")}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+                      <div className="font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                        <span>{t("methodology_fake_title")}</span>
+                      </div>
+                      <p className="text-rose-900/90 leading-relaxed">
+                        {t("pillar_2_fake")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pillar 3: Mathematical Checksums */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-2 rounded-xl bg-purple-100/80 text-purple-700">
+                      <Cpu className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {t("pillar_3_name")}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                      <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{t("methodology_real_title")}</span>
+                      </div>
+                      <p className="text-emerald-900/90 leading-relaxed">
+                        {t("pillar_3_real")}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+                      <div className="font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                        <span>{t("methodology_fake_title")}</span>
+                      </div>
+                      <p className="text-rose-900/90 leading-relaxed">
+                        {t("pillar_3_fake")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pillar 4: PKI & QR Signatures */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-2 rounded-xl bg-amber-100/80 text-amber-700">
+                      <Lock className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {t("pillar_4_name")}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                      <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{t("methodology_real_title")}</span>
+                      </div>
+                      <p className="text-emerald-900/90 leading-relaxed">
+                        {t("pillar_4_real")}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+                      <div className="font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                        <span>{t("methodology_fake_title")}</span>
+                      </div>
+                      <p className="text-rose-900/90 leading-relaxed">
+                        {t("pillar_4_fake")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pillar 5: Sensor Noise & Anti-Spoofing */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-2 rounded-xl bg-teal-100/80 text-teal-700">
+                      <Fingerprint className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {t("pillar_5_name")}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                      <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{t("methodology_real_title")}</span>
+                      </div>
+                      <p className="text-emerald-900/90 leading-relaxed">
+                        {t("pillar_5_real")}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+                      <div className="font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                        <span>{t("methodology_fake_title")}</span>
+                      </div>
+                      <p className="text-rose-900/90 leading-relaxed">
+                        {t("pillar_5_fake")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pillar 6: Template Matching */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-2 rounded-xl bg-rose-100/80 text-rose-700">
+                      <FileCheck className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {t("pillar_6_name")}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                      <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{t("methodology_real_title")}</span>
+                      </div>
+                      <p className="text-emerald-900/90 leading-relaxed">
+                        {t("pillar_6_real")}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+                      <div className="font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                        <span>{t("methodology_fake_title")}</span>
+                      </div>
+                      <p className="text-rose-900/90 leading-relaxed">
+                        {t("pillar_6_fake")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Forensic Loupe & Comparator */}
+            <div className="mt-14 max-w-4xl mx-auto rounded-2xl border border-slate-200/80 bg-slate-50 p-5 sm:p-7 shadow-sm">
+              <div className="text-center max-w-2xl mx-auto mb-6">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  {t("specimen_title")}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {t("specimen_subtitle")}
+                </p>
+
+                {/* Profile Toggle Switch */}
+                <div className="mt-4 inline-flex items-center rounded-xl bg-slate-200/80 p-1 border border-slate-300/60 text-xs">
+                  <button
+                    onClick={() => {
+                      setActiveSpecimenTab("genuine");
+                      handleLaunchSpecimen("aadhaar_rahul_sharma");
+                    }}
+                    className={`px-4 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                      activeSpecimenTab === "genuine"
+                        ? "bg-white text-emerald-800 shadow-xs border border-emerald-200"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    {t("tab_genuine")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSpecimenTab("forged");
+                      handleLaunchSpecimen("aadhaar_tampered_priya");
+                    }}
+                    className={`px-4 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                      activeSpecimenTab === "forged"
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    {t("tab_forged")}
+                  </button>
+                </div>
+              </div>
+
+              {/* Specimen Inspection Matrix */}
+              <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      {t("diagnostic_summary")}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                      activeSpecimenTab === "genuine"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-rose-50 text-rose-700 border border-rose-200"
+                    }`}
+                  >
+                    {activeSpecimenTab === "genuine"
+                      ? t("specimen_status_genuine")
+                      : t("specimen_status_forged")}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="font-semibold text-slate-500 block text-[11px] uppercase tracking-wider mb-1">
+                      Pixel Compression Analysis (ELA)
+                    </span>
+                    <span className={`font-bold ${activeSpecimenTab === "genuine" ? "text-emerald-700" : "text-rose-700"}`}>
+                      {activeSpecimenTab === "genuine"
+                        ? "Uniform 8×8 DCT Error (Mean error 3.8 / Peak Anomaly 1.1x) · Pristine"
+                        : "High Forgery Discontinuity (Mean error 24.8 / Peak Anomaly 3.4x) · Spliced"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="font-semibold text-slate-500 block text-[11px] uppercase tracking-wider mb-1">
+                      Statutory Checksum Parity
+                    </span>
+                    <span className={`font-bold ${activeSpecimenTab === "genuine" ? "text-emerald-700" : "text-rose-700"}`}>
+                      {activeSpecimenTab === "genuine"
+                        ? "Verhoeff Dihedral Permutation D5 Matched · Valid State ID"
+                        : "PARITY_FAIL_SPLICED_DIGITS · Tier A Non-Negotiable Hard Veto"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="font-semibold text-slate-500 block text-[11px] uppercase tracking-wider mb-1">
+                      Cryptographic Issuer Signature
+                    </span>
+                    <span className={`font-bold ${activeSpecimenTab === "genuine" ? "text-emerald-700" : "text-rose-700"}`}>
+                      {activeSpecimenTab === "genuine"
+                        ? "2048-bit RSA Digital Signature Authenticated against Official Public Key"
+                        : "Cryptographic Digest Mismatch · Unsigned or Forged QR Structure"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="font-semibold text-slate-500 block text-[11px] uppercase tracking-wider mb-1">
+                      Micro-Typography & Sensor Noise
+                    </span>
+                    <span className={`font-bold ${activeSpecimenTab === "genuine" ? "text-emerald-700" : "text-rose-700"}`}>
+                      {activeSpecimenTab === "genuine"
+                        ? "Continuous Optical Sensor Noise & Authentic Print Baselines Verified"
+                        : "Flat Digital Synthetic Canvas / Font Kerning Jitter Detected"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                    <span>Quick Specimen Demonstrator:</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleLaunchSpecimen("pan_rohit_patel")}
+                      className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-slate-200 bg-white hover:border-indigo-300 text-slate-700 cursor-pointer transition"
+                    >
+                      PAN Card (Clean)
+                    </button>
+                    <button
+                      onClick={() => handleLaunchSpecimen("passport_standard")}
+                      className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-slate-200 bg-white hover:border-indigo-300 text-slate-700 cursor-pointer transition"
+                    >
+                      Passport (ICAO)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
-      {/* Clean Minimalist Footer */}
-      <footer className="border-t border-slate-200/80 bg-white py-6 mt-auto">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">VeriScan // SIH-2026</span>
-            <span>·</span>
-            <span>Evidentiary Document Screening Node</span>
+      {/* Multilingual Institutional Global Footer */}
+      <footer className="border-t border-slate-200/80 bg-white py-8 mt-auto">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-xs">
+                V
+              </div>
+              <div>
+                <span className="font-extrabold text-sm text-slate-900 block leading-none">
+                  {t("footer_brand")}
+                </span>
+                <span className="text-[11px] text-slate-500 leading-tight">
+                  {t("footer_node")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-600">
+              <button
+                onClick={() => setLocation("/dashboard")}
+                className="hover:text-indigo-600 transition-colors cursor-pointer"
+              >
+                {t("nav_dashboard")}
+              </button>
+              <button
+                onClick={() => setLocation("/border")}
+                className="hover:text-indigo-600 transition-colors cursor-pointer"
+              >
+                {t("nav_border")}
+              </button>
+              <button
+                onClick={() => setLocation("/verify")}
+                className="hover:text-indigo-600 transition-colors cursor-pointer"
+              >
+                {t("nav_verify")}
+              </button>
+              <button
+                onClick={() => setLocation("/history")}
+                className="hover:text-indigo-600 transition-colors cursor-pointer"
+              >
+                {t("nav_history")}
+              </button>
+              <button
+                onClick={() => setLocation("/settings")}
+                className="hover:text-indigo-600 transition-colors cursor-pointer"
+              >
+                {t("nav_settings")}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setLocation("/dashboard")}
-              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => setLocation("/border")}
-              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
-            >
-              Border Terminal
-            </button>
-            <button
-              onClick={() => setLocation("/verify")}
-              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
-            >
-              Verify
-            </button>
-            <button
-              onClick={() => setLocation("/history")}
-              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
-            >
-              Audit Trail
-            </button>
-            <button
-              onClick={() => setLocation("/settings")}
-              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
-            >
-              Settings
-            </button>
+
+          <div className="pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 text-center sm:text-left">
+            <span>{t("footer_desc")}</span>
+            <span className="font-mono text-[10px] text-slate-500">
+              {t("footer_privacy")}
+            </span>
           </div>
         </div>
       </footer>

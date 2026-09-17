@@ -423,7 +423,9 @@ export function createApp() {
         docText = strMatches.join(" ");
       }
 
-      const isSuspect = fileName.toLowerCase().includes("fake") || fileName.toLowerCase().includes("tamper") || fileName.toLowerCase().includes("altered");
+      const rawBufferLatin = docBytes ? docBytes.slice(0, 32768).toString("latin1").toLowerCase() : "";
+      const hasEditorTraces = /photoshop|canva|gimp|figma|coreldraw|illustrator|inkscape|paint\.net|sketch/.test(rawBufferLatin);
+      const isSuspect = fileName.toLowerCase().includes("fake") || fileName.toLowerCase().includes("tamper") || fileName.toLowerCase().includes("altered") || hasEditorTraces;
 
       if (effectiveDocType === "Passport") {
         const mrzRegex = /([A-Z0-9<]{30,44})/g;
@@ -439,28 +441,26 @@ export function createApp() {
             ? "VERIFIED (7-3-1 Weight Matrix Matched)"
             : "PARITY_FAIL_SPLICED_DIGITS";
         } else {
-          // Valid raster image stream
-          isValid = Boolean(docBytes && docBytes.length > 2000);
-          checksumParity = isValid
-            ? "VERIFIED (7-3-1 Weight Matrix Matched)"
-            : "MRZ_ABSENT";
+          // If MRZ is absent on a passport specimen, it cannot be verified
+          isValid = false;
+          checksumParity = "MRZ_ABSENT_OR_UNREADABLE";
         }
       } else if (effectiveDocType === "Driving License") {
         const hasQr = Boolean(docBytes && (docBytes.includes(Buffer.from("QR")) || docBytes.includes(Buffer.from("PARIVAHAN")) || docBytes.includes(Buffer.from("DL"))));
         const hasDlPattern = Boolean(docText.match(/\b([A-Z]{2}[0-9]{2}[ -]?[0-9]{4,11}|[A-Z]{1,2}[0-9]{6,8}|DL[ -]?[0-9]{8,15}|[0-9]{8,16})\b/i));
         const hasDlKeywords = Boolean(docText.match(/(DRIVING|DRIVER|LICENCE|LICENSE|PERMIT|TRANSPORT|MOTOR|VEHICLE|AUTHORITY|COMMISSIONER|DOB|VALID|EXPIRES|CLASS|LMV|MCWG|COV|DATE|NAME|UNION|STATE|GOVERNMENT)/i));
-        isValid = !isSuspect && (hasQr || hasDlPattern || hasDlKeywords || Boolean(docBytes && docBytes.length > 2000));
+        isValid = !isSuspect && (hasQr || hasDlPattern || hasDlKeywords);
         checksumParity = isSuspect ? "UNRECOGNIZED_DL_STRUCTURE" : (hasQr ? "QR / Digital Code Authenticated" : "DL Format & Authority Verified");
       } else if (effectiveDocType === "PAN Card") {
         const hasPanPattern = Boolean(docText.match(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/i));
         const hasPanKw = Boolean(docText.match(/(INCOME|TAX|PERMANENT|ACCOUNT|NUMBER|GOVT|INDIA|DEPARTMENT|FATHER|SIGNATURE)/i));
-        isValid = !isSuspect && (hasPanPattern || hasPanKw || Boolean(docBytes && docBytes.length > 2000));
+        isValid = !isSuspect && (hasPanPattern || hasPanKw);
         checksumParity = isSuspect ? "UNRECOGNIZED_PAN_STRUCTURE" : (hasPanPattern ? "PAN Alphanumeric & Tax Structure Verified" : "Tax Authority Format Verified");
       } else {
         const hasQr = Boolean(docBytes && (docBytes.includes(Buffer.from("QR")) || docBytes.includes(Buffer.from("aadhar")) || docBytes.includes(Buffer.from("GOVT"))));
         const hasIdPattern = Boolean(docText.match(/\b(\d{4}\s?\d{4}\s?\d{4}|[A-Z]{3}[0-9]{7}|[0-9]{9,16})\b/));
         const hasIdKw = Boolean(docText.match(/(GOVERNMENT|INDIA|IDENTIFICATION|AADHAAR|DOB|DATE OF BIRTH|MALE|FEMALE|UNION|CARD|NATIONAL|IDENTITY|CITIZEN|RESIDENT|ELECTOR|VOTER)/i));
-        isValid = !isSuspect && (hasQr || hasIdPattern || hasIdKw || Boolean(docBytes && docBytes.length > 2000));
+        isValid = !isSuspect && (hasQr || hasIdPattern || hasIdKw);
         checksumParity = isSuspect ? "UNRECOGNIZED_ID_STRUCTURE" : (hasQr ? "QR / Digital Code Authenticated" : "Visual Structure & Credential ID Verified");
       }
 
@@ -602,9 +602,11 @@ export function createApp() {
         trust = Math.min(45, trust); // Capped at 45 if template unverified
       }
 
-      // Pristine clean specimens receive 92 - 97 score
+      // Pristine clean specimens receive 90 - 96 score; tampered/unverified specimens stay <= 38
       if (!isTampered && !cnnForensics.tamper_detected && isValid) {
-        trust = Math.min(97, Math.max(92, trust));
+        trust = Math.min(96, Math.max(90, trust));
+      } else {
+        trust = Math.min(38, trust);
       }
 
       const finalTrust = Math.max(trust, 5);

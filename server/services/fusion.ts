@@ -355,14 +355,23 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
     }
   }
 
-  // Structural Template Positive-Match Layer (Requirement 3):
-  // If layout doesn't match any known template above similarity threshold,
-  // cap maximum possible score at 45 regardless of how clean other forensic checks appear.
   const templateFailed = active.some(
     (c) => c.checkName === "structural_template_matching" && c.result === "flag"
   );
   if (templateFailed) {
     score = Math.min(45, score);
+  }
+
+  // Realistic Optical Entropy & Positive Proof Scaling:
+  // Genuine physical scans with authentic noise have natural entropy, capping score at 98.
+  // Documents lacking positive cryptographic/checksum proof are bounded at 92.
+  const hasStrongCryptographicProof = active.some(
+    (c) => (c.checkName === "qr_signature_verification" || c.checkName === "checksum_identifier_validation") && c.result === "pass" && c.confidence >= 95
+  );
+  if (!hasStrongCryptographicProof && score >= 90 && !isTierAFailed && !isSingleHeuristicFail && !isCumulativeHeuristicFail) {
+    score = Math.min(score, 92);
+  } else if (score === 100) {
+    score = 98;
   }
 
   // 6. Final Verdict Mapping

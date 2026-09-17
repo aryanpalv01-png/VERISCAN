@@ -37,9 +37,12 @@ export default function History() {
     if (scansQuery.data && Array.isArray(scansQuery.data) && scansQuery.data.length > 0) {
       serverDocs = (scansQuery.data as any[]).map((doc) => {
         const checks = Array.isArray(doc.checks) ? doc.checks : [];
-        const score = checks.length > 0
-          ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore)
-          : (doc.confidenceScore ?? 0);
+        const score =
+          typeof doc.confidenceScore === "number"
+            ? doc.confidenceScore
+            : checks.length > 0
+            ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore)
+            : 0;
 
         return {
           id: String(doc.id),

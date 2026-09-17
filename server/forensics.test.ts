@@ -333,5 +333,30 @@ describe("forensic module contracts", () => {
     expect(result.status).toBe("likely_forged");
     expect(result.score).not.toBe(50);
   });
+
+  it("correctly identifies a fake/tampered image with an innocent filename (not containing 'fake') and rejects 100 score", async () => {
+    // A tampered image created in Photoshop / Canva with an innocent file name
+    const tamperedContent = Buffer.concat([
+      Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+      Buffer.from("Exif\0\0Photoshop 3.0 8BIM Canva exported document specimen"),
+      Buffer.alloc(1024, 0x55),
+    ]);
+
+    const result = await runForensicAnalysis({
+      filename: "official_aadhaar_card_2026.jpg",
+      mimeType: "image/jpeg",
+      fileSize: tamperedContent.length,
+      documentType: "aadhaar",
+      content: tamperedContent,
+    });
+
+    expect(result.checks).toHaveLength(11);
+    // Must NOT give a 100 score to a fake/tampered image!
+    expect(result.score).not.toBe(100);
+    expect(result.score).toBeLessThan(40);
+    expect(result.status).toBe("likely_forged");
+    expect(result.checks.some((c) => c.result === "flag")).toBe(true);
+  });
 });
+
 

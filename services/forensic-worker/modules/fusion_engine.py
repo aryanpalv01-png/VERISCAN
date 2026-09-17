@@ -261,7 +261,21 @@ class VeriScanScoringPipeline:
             if "minor" in expl or "potential" in expl:
                 final_score = max(85, final_score)
 
-        # C. Tier A Hard Overrides: Absolute Veto strictly below 30.0 (< 30.0, clamped in [15, 25])
+        # C. Realistic Optical Entropy Ceiling: Real-world physical capture contains optical noise;
+        # documents lacking positive cryptographic proof cap at 92, and even pristine specimens cap at 98.
+        if not has_hard_fail:
+            has_crypto_proof = any(
+                c.get("checkName") in ("qr_signature_verification", "checksum_validation", "checksum_identifier_validation")
+                and c.get("result") == "pass"
+                and float(c.get("confidence", 0)) >= 90
+                for c in active_checks
+            )
+            if not has_crypto_proof:
+                final_score = min(92, final_score)
+            elif final_score >= 99:
+                final_score = 98
+
+        # D. Tier A Hard Overrides: Absolute Veto strictly below 30.0 (< 30.0, clamped in [15, 25])
         if has_hard_fail:
             final_score = min(25, max(15, final_score if final_score <= 25 else 20))
 

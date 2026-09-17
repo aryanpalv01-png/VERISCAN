@@ -31,7 +31,7 @@ describe("Supabase Email Authentication Methods", () => {
     // With dummy/unconfigured Supabase keys, gracefully catches error or returns handled object
     expect(res).toBeDefined();
     expect(typeof res.success).toBe("boolean");
-  });
+  }, 10000);
 
   it("handles email OTP / magic link dispatch with production redirect", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});

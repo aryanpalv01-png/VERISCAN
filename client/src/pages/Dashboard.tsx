@@ -201,9 +201,11 @@ export default function Dashboard() {
     return (scansQuery.data as any[]).map((doc) => {
       const checks = Array.isArray(doc.checks) ? doc.checks : [];
       const score =
-        checks.length > 0
+        typeof doc.confidenceScore === "number"
+          ? doc.confidenceScore
+          : checks.length > 0
           ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore)
-          : (doc.confidenceScore ?? 0);
+          : 0;
 
       return {
         id: String(doc.id),
