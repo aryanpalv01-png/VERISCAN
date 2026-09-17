@@ -1,10 +1,25 @@
 import React, { useState } from "react";
+import { useLocation } from "wouter";
+import { GovMasthead } from "@/components/common/GovMasthead";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/_core/hooks/useAuth";
+import {
+  ArrowRight,
+  LogIn,
+  UserPlus,
+  LogOut,
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 import {
   BorderVerificationResponse,
   verifyBorderDocument,
 } from "../lib/borderApi";
 
 export default function BorderCheckpoint() {
+  const [, setLocation] = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [docType, setDocType] = useState<string>("Passport");
   const [loading, setLoading] = useState<boolean>(false);
@@ -22,59 +37,100 @@ export default function BorderCheckpoint() {
     setError(null);
 
     try {
-      // Use verified border API utility with fallback
+      // Use verified border API utility with resilient dynamic analysis
       const data = await verifyBorderDocument(file, docType);
       setResult(data);
     } catch (err: any) {
-      // Fallback local simulation if backend route is unlinked during preview
-      const isFake = file.name.toLowerCase().includes("fake") || file.name.toLowerCase().includes("tamper");
-      setResult({
-        status: "success",
-        document_type: docType,
-        trust_score: isFake ? 35 : 94,
-        verdict: isFake ? "HOLD_FOR_MANUAL_INSPECTION" : "CLEAR_ENTRY",
-        tier_a_override: isFake,
-        tier_a_failure_reason: isFake ? "CRITICAL_TIER_A: Document Splicing Anomaly Detected" : undefined,
-        modules_breakdown: {
-          module_1_ocr: { extracted_snippet: "ICAO 9303 TD3 STANDARD PASSPORT DATA PARSED" },
-          module_2_validation: {
-            valid: !isFake,
-            checksum_parity: isFake ? "PARITY_FAIL_SPLICED_DIGITS" : "VERIFIED (7-3-1 Weight Matrix Matched)",
-            compliance: isFake ? "Non-Compliant Structure" : "Verified & Validated",
-          } as any,
-          module_3_tampering: {
-            tampered: isFake,
-            compression_anomaly_score: isFake ? 29.4 : 4.1,
-            forensic_status: isFake ? "HIGH FORGERY CONFIDENCE" : "PRISTINE PIXEL INTEGRITY",
-          },
-          module_4_face_verification: {
-            match_score: isFake ? "42.0%" : "96.2%",
-            liveness_check: isFake ? "Failed (Synthetic Replay)" : "Passed (3D Depth)",
-          },
-        },
-      });
+      console.error("Border screening error:", err);
+      setError(err?.message || "Screening Engine failed to process document.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
-      {/* Enterprise Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-indigo-600 selection:text-white">
+      {/* Official Government Masthead */}
+      <GovMasthead theme="light" />
+
+      {/* Main Navigation Bar with User Auth */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-sm tracking-tight shadow-sm">
-              VS
-            </div>
-            <div>
-              <span className="font-semibold tracking-tight text-slate-900 text-sm">VeriScan Enterprise</span>
-              <span className="text-xs text-slate-400 block -mt-0.5">Border Screening Terminal</span>
-            </div>
+            <button
+              onClick={() => setLocation("/")}
+              className="flex items-center space-x-2.5 text-left cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center text-sm tracking-tight shadow-sm">
+                VS
+              </div>
+              <div>
+                <span className="font-bold tracking-tight text-slate-900 text-sm">VeriScan Enterprise</span>
+                <span className="text-[11px] text-slate-400 block -mt-0.5">Border Screening Terminal</span>
+              </div>
+            </button>
           </div>
-          <div className="flex items-center space-x-2 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Secure Node Active</span>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:flex items-center space-x-2 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Secure Node Active</span>
+            </div>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden md:inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  {user?.email || "Officer"}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setLocation("/dashboard")}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs h-8 px-3 cursor-pointer"
+                >
+                  <span>Command Center</span>
+                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    await logout();
+                  }}
+                  className="text-xs font-semibold text-slate-600 hover:text-slate-900 h-8 px-2 rounded-lg cursor-pointer"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/auth/login")}
+                  className="text-xs font-semibold text-slate-700 hover:text-slate-900 h-8 px-2.5 rounded-lg cursor-pointer"
+                >
+                  <LogIn className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+                  <span>Login</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation("/auth/register")}
+                  className="text-xs font-semibold text-indigo-700 border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 rounded-lg h-8 px-2.5 cursor-pointer"
+                >
+                  <UserPlus className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+                  <span>Register</span>
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setLocation("/dashboard")}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs h-8 px-3 cursor-pointer"
+                >
+                  <span>Command Center</span>
+                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -240,6 +296,49 @@ export default function BorderCheckpoint() {
           </div>
         </div>
       </main>
+
+      {/* Clean Minimalist Footer */}
+      <footer className="border-t border-slate-200/80 bg-white py-6 mt-auto">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-800">VeriScan // SIH-2026</span>
+            <span>·</span>
+            <span>Evidentiary Border Screening Terminal</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLocation("/")}
+              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => setLocation("/dashboard")}
+              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setLocation("/verify")}
+              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
+            >
+              Verify
+            </button>
+            <button
+              onClick={() => setLocation("/history")}
+              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
+            >
+              Audit Trail
+            </button>
+            <button
+              onClick={() => setLocation("/settings")}
+              className="hover:text-indigo-600 font-medium transition-colors cursor-pointer"
+            >
+              Settings
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

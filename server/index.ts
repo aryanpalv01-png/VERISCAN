@@ -24,12 +24,17 @@ async function ensureForensicWorkerRunning(): Promise<void> {
   }
 
   const venvUvicorn = path.resolve(process.cwd(), "services/forensic-worker/venv/bin/uvicorn");
+  const backendMain = path.resolve(process.cwd(), "backend/main.py");
   const workerDir = path.resolve(process.cwd(), "services/forensic-worker");
 
   if (fs.existsSync(venvUvicorn)) {
     console.log(`[ForensicWorker] Launching Python forensic worker on port 8000...`);
-    workerProcess = spawn(venvUvicorn, ["app:app", "--host", "127.0.0.1", "--port", "8000"], {
-      cwd: workerDir,
+    const appTarget = fs.existsSync(backendMain) ? "backend.main:app" : "app:app";
+    const appCwd = fs.existsSync(backendMain) ? process.cwd() : workerDir;
+
+    workerProcess = spawn(venvUvicorn, [appTarget, "--host", "127.0.0.1", "--port", "8000"], {
+      cwd: appCwd,
+      env: { ...process.env, PYTHONPATH: process.cwd() },
       stdio: "inherit",
     });
 
