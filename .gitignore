@@ -126,3 +126,4 @@ uploads/
 
 
 .vercel
+.env*
