@@ -49,6 +49,7 @@ export type VerificationDocument = {
   uploadedAt: string;
   status: DocumentStatus;
   score: number;
+  confidenceScore?: number;
   fileSize: string;
   mimeType: string;
   reference: string;
@@ -686,10 +687,11 @@ export function serverDocumentToVerification(document: ServerDocumentRecord, che
   }));
 
   const executedCount = checks.filter((c) => c.result === "pass" || c.result === "flag").length;
-  const aggregatedScore = calculateAggregatedConfidenceScore(checks, document.confidenceScore);
+  const docScore = typeof document.confidenceScore === "number" ? document.confidenceScore : (typeof (document as any).score === "number" ? (document as any).score : undefined);
+  const aggregatedScore = calculateAggregatedConfidenceScore(checks, docScore);
   const score = checkRows.length > 0 && executedCount === 0
     ? 0
-    : (typeof document.confidenceScore === "number" ? document.confidenceScore : aggregatedScore);
+    : (docScore !== undefined ? docScore : aggregatedScore);
 
   return {
     id: String(document.id),
@@ -773,6 +775,9 @@ export function calculateAggregatedConfidenceScore(
   checks?: Array<{ result?: string; confidence?: number | null }> | null,
   fallbackScore?: number | null
 ): number {
+  if (typeof fallbackScore === "number" && !isNaN(fallbackScore) && fallbackScore > 0) {
+    return fallbackScore;
+  }
   if (!checks || !Array.isArray(checks) || checks.length === 0) {
     return typeof fallbackScore === "number" && !isNaN(fallbackScore) ? fallbackScore : 0;
   }
@@ -1265,6 +1270,7 @@ export async function analyzeDocumentFile(file: File, documentType?: DocumentKin
     uploadedAt: new Date().toISOString(),
     status,
     score,
+    confidenceScore: score,
     activeModulesCount,
     fileSize: `${Math.max(0.1, file.size / 1024 / 1024).toFixed(1)} MB`,
     mimeType: file.type || "image/jpeg",

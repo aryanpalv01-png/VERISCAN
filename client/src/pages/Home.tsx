@@ -261,6 +261,14 @@ export default function Home() {
         // Also save to local scan history for the logged in user
         const doc = await analyzeDocumentFile(file, detectedKind);
         writeLocalScan(doc, user?.email || "guest");
+
+        toast.info("Forensic Dossier Ready", {
+          description: `Score: ${doc.score}/100 · ${doc.status === "likely_forged" ? "Likely Forged" : doc.status === "needs_review" ? "Needs Review" : "Verified"}.`,
+          action: {
+            label: "Open Full Report",
+            onClick: () => setLocation(`/report/${doc.id}`),
+          },
+        });
       } catch (err: any) {
         console.error("Specimen intake error:", err);
         toast.error("Ingestion failed", {

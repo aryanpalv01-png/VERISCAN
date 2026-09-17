@@ -583,33 +583,57 @@ export function createApp() {
         });
       }
 
-      // Step 6: Multi-Factor Scoring & Structural Template Positive Match (Requirement 3)
+      // Step 6: Multi-Factor Scoring & Structural Template Positive Match
       let trust = 100;
-      if (isTampered) trust -= 35;
+      let penalties = 0;
+
+      // 1. Structural validity penalty
+      if (!isValid) {
+        penalties += effectiveDocType === "Passport" ? 70 : 52;
+      }
+
+      // 2. Localized ELA Compression Anomaly
+      if (forensicRes.tampered || isTampered) {
+        const elaPenalty = Math.round(Math.min(35, Math.max(20, meanDiff * 1.05)));
+        penalties += elaPenalty;
+      }
+
+      // 3. Multi-class CNN Forensics
       if (cnnForensics.tamper_detected) {
-        if (cnnForensics.predicted_type === "PHOTO_REPLACEMENT") trust -= 35;
-        else if (cnnForensics.predicted_type === "TEXT_TAMPERING") trust -= 30;
-        else if (cnnForensics.predicted_type === "STAMP_OR_SEAL_ANOMALY") trust -= 25;
-        else if (cnnForensics.predicted_type === "SCREENSHOT_RECOMPRESSION") trust -= 15;
-        else trust -= 20;
-      }
-      if (faceMatch < 70) trust -= 35;
-
-      // Positive-Match Template Constraint: check for institutional anchors or valid visual specimen payload
-      const hasVisualData = Boolean(docBytes && docBytes.length > 1000);
-      const hasTemplateAnchor = hasVisualData || ["PASSPORT", "AADHAAR", "DRIVING", "VISA", "REPUBLIC", "INCOME", "TAX", "PAN", "GOVERNMENT", "STATE", "UNION", "CARD", "IDENTITY", "COMMISSION", "AUTHORITY", "DEPARTMENT", "NAME"].some(k => textUpper.includes(k));
-      if (!hasTemplateAnchor) {
-        trust = Math.min(45, trust); // Capped at 45 if template unverified
+        if (cnnForensics.predicted_type === "PHOTO_REPLACEMENT") {
+          penalties += Math.round(cnnForensics.tamper_probability * 35);
+        } else if (cnnForensics.predicted_type === "TEXT_TAMPERING") {
+          penalties += Math.round(cnnForensics.tamper_probability * 30);
+        } else if (cnnForensics.predicted_type === "STAMP_OR_SEAL_ANOMALY") {
+          penalties += Math.round(cnnForensics.tamper_probability * 25);
+        } else if (cnnForensics.predicted_type === "SCREENSHOT_RECOMPRESSION") {
+          penalties += 15;
+        } else {
+          penalties += 20;
+        }
       }
 
-      // Pristine clean specimens receive 90 - 96 score; tampered/unverified specimens stay <= 38
+      // 4. Biometric Face Match Shortfall
+      if (faceMatch < 70) {
+        penalties += Math.round((70 - faceMatch) * 0.6 + 18);
+      }
+
+      // 5. Template Anchor Presence
+      const hasKeywords = ["PASSPORT", "AADHAAR", "DRIVING", "VISA", "REPUBLIC", "INCOME", "TAX", "PAN", "GOVERNMENT", "STATE", "UNION", "CARD", "IDENTITY", "COMMISSION", "AUTHORITY", "DEPARTMENT", "NAME"].some(k => textUpper.includes(k));
+      if (!hasKeywords && !isValid) {
+        penalties += 16;
+      }
+
+      trust = Math.max(8, 100 - penalties);
+
+      // Clean verified documents receive 90 - 96; incorrect/tampered specimens scale dynamically in [10, 38]
       if (!isTampered && !cnnForensics.tamper_detected && isValid) {
         trust = Math.min(96, Math.max(90, trust));
       } else {
-        trust = Math.min(38, trust);
+        trust = Math.min(38, Math.max(10, trust));
       }
 
-      const finalTrust = Math.max(trust, 5);
+      const finalTrust = trust;
       const verdict = finalTrust >= 75 ? "CLEAR_ENTRY" : "HOLD_FOR_MANUAL_INSPECTION";
 
       return res.status(200).json({

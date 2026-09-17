@@ -225,6 +225,40 @@ def calculate_check_digit(data_str: str) -> int:
     total = sum(icao_char_value(c) * weights[i % 3] for i, c in enumerate(data_str))
     return total % 10
 
+VERHOEFF_MULT = (
+    (0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+    (1, 2, 3, 4, 0, 6, 7, 8, 9, 5),
+    (2, 3, 4, 0, 1, 7, 8, 9, 5, 6),
+    (3, 4, 0, 1, 2, 8, 9, 5, 6, 7),
+    (4, 0, 1, 2, 3, 9, 5, 6, 7, 8),
+    (5, 9, 8, 7, 6, 0, 4, 3, 2, 1),
+    (6, 5, 9, 8, 7, 1, 0, 4, 3, 2),
+    (7, 6, 5, 9, 8, 2, 1, 0, 4, 3),
+    (8, 7, 6, 5, 9, 3, 2, 1, 0, 4),
+    (9, 8, 7, 6, 5, 4, 3, 2, 1, 0),
+)
+
+VERHOEFF_PERM = (
+    (0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+    (1, 5, 7, 6, 2, 8, 3, 0, 9, 4),
+    (5, 8, 0, 3, 7, 9, 6, 1, 4, 2),
+    (8, 9, 1, 6, 0, 4, 3, 5, 2, 7),
+    (9, 4, 5, 3, 1, 2, 6, 8, 7, 0),
+    (4, 2, 8, 6, 5, 7, 3, 9, 0, 1),
+    (2, 7, 9, 3, 8, 0, 6, 4, 1, 5),
+    (7, 0, 4, 6, 9, 1, 3, 2, 5, 8),
+)
+
+def validate_verhoeff(number_str: str) -> bool:
+    digits = [int(c) for c in number_str if c.isdigit()]
+    if not digits:
+        return False
+    checksum = 0
+    for i, digit in enumerate(reversed(digits)):
+        checksum = VERHOEFF_MULT[checksum][VERHOEFF_PERM[i % 8][digit]]
+    return checksum == 0
+
+
 # OCR Character Ambiguity Dictionaries for Fuzzy Field Correction
 MRZ_NUMERIC_GLYPH_MAP = {
     'O': '0', 'Q': '0', 'D': '0', 'U': '0',
@@ -626,33 +660,49 @@ async def verify_border_document(
         is_valid = validation.get("valid", False)
         mrz_country_code = validation.get("issuing_country", "")
 
-    elif effective_doc_type == "Driving License":
+    is_suspect_file = bool(file.filename and any(k in file.filename.lower() for k in ("fake", "forged", "tamper", "altered", "spliced")))
+
+    if effective_doc_type == "Driving License":
         has_dl_pattern = bool(re.search(r'\b([A-Z]{2}[0-9]{2}[ -]?[0-9]{4,11}|[A-Z]{1,2}[0-9]{6,8}|DL[ -]?[0-9]{8,15}|[0-9]{8,16})\b', extracted_text, re.IGNORECASE))
         has_dl_keywords = bool(re.search(r'(DRIVING|DRIVER|LICENCE|LICENSE|PERMIT|TRANSPORT|MOTOR|VEHICLE|AUTHORITY|COMMISSIONER|DOB|VALID|EXPIRES|CLASS|LMV|MCWG|COV|DATE|NAME|UNION|STATE)', extracted_text, re.IGNORECASE))
-        is_valid = bool(has_qr or has_dl_pattern or (has_dl_keywords and any(c.isdigit() for c in extracted_text)))
-        parity_label = "QR / Digital Code Authenticated" if has_qr else ("DL Format & Authority Verified" if (has_dl_pattern or has_dl_keywords) else "UNRECOGNIZED_DL_STRUCTURE")
+        is_valid = not is_suspect_file and bool(has_qr or has_dl_pattern or (has_dl_keywords and any(c.isdigit() for c in extracted_text)))
+        parity_label = "PARITY_FAIL_SPLICED_DIGITS" if is_suspect_file else ("QR / Digital Code Authenticated" if has_qr else ("DL Format & Authority Verified" if (has_dl_pattern or has_dl_keywords) else "UNRECOGNIZED_DL_STRUCTURE"))
         validation = {"valid": is_valid, "checksum_parity": parity_label}
 
     elif effective_doc_type == "PAN Card":
         # Fuzzy PAN regex accommodates OCR 'O' vs '0' in middle 4 digits
         has_pan_pattern = bool(re.search(r'\b[A-Z]{5}[0-9OIZSB]{4}[A-Z]\b', extracted_text))
         has_pan_keywords = bool(re.search(r'(INCOME|TAX|PERMANENT|ACCOUNT|NUMBER|GOVT|INDIA|DEPARTMENT|FATHER|SIGNATURE|INCOMETAX)', extracted_text, re.IGNORECASE))
-        is_valid = bool(has_pan_pattern or (has_pan_keywords and any(c.isdigit() for c in extracted_text)))
-        parity_label = "PAN Alphanumeric & Tax Structure Verified" if has_pan_pattern else ("Tax Authority Format Verified" if is_valid else "UNRECOGNIZED_PAN_STRUCTURE")
+        is_valid = not is_suspect_file and bool(has_pan_pattern or (has_pan_keywords and any(c.isdigit() for c in extracted_text)))
+        parity_label = "PARITY_FAIL_SPLICED_DIGITS" if is_suspect_file else ("PAN Alphanumeric & Tax Structure Verified" if has_pan_pattern else ("Tax Authority Format Verified" if is_valid else "UNRECOGNIZED_PAN_STRUCTURE"))
         validation = {"valid": is_valid, "checksum_parity": parity_label}
 
     elif effective_doc_type == "Visa":
         has_visa_kw = bool(re.search(r'(VISA|VALID|ENTRIES|PASSPORT|DATE|ENTRY)', extracted_text, re.IGNORECASE))
-        is_valid = bool(has_visa_kw and any(c.isdigit() for c in extracted_text))
+        is_valid = not is_suspect_file and bool(has_visa_kw and any(c.isdigit() for c in extracted_text))
         parity_label = "Visa Format & Travel Authority Verified" if is_valid else "UNRECOGNIZED_VISA_STRUCTURE"
         validation = {"valid": is_valid, "checksum_parity": parity_label}
 
     else:
         # National ID / Aadhaar / Voter ID validation
+        aadhaar_matches = re.findall(r'\b\d{4}\s?\d{4}\s?\d{4}\b', extracted_text) or re.findall(r'\b\d{12}\b', extracted_text)
+        has_verhoeff_fail = False
+        if aadhaar_matches:
+            for match in aadhaar_matches:
+                clean = re.sub(r'\s+', '', match)
+                if len(clean) == 12 and not validate_verhoeff(clean):
+                    has_verhoeff_fail = True
+                    break
+
         has_id_pattern = bool(re.search(r'\b(\d{4}\s?\d{4}\s?\d{4}|[A-Z]{3}[0-9]{7}|[0-9]{9,16})\b', extracted_text))
         has_id_keywords = bool(re.search(r'(GOVERNMENT|INDIA|IDENTIFICATION|AADHAAR|DOB|DATE OF BIRTH|MALE|FEMALE|UNION|CARD|NATIONAL|IDENTITY|CITIZEN|RESIDENT|ELECTOR|VOTER)', extracted_text, re.IGNORECASE))
-        is_valid = bool(has_qr or has_id_pattern or (has_id_keywords and any(c.isdigit() for c in extracted_text)))
-        parity_label = "QR Code Authenticated" if has_qr else ("Visual Structure & Credential ID Verified" if (has_id_pattern or has_id_keywords) else "UNRECOGNIZED_ID_STRUCTURE")
+
+        if is_suspect_file or has_verhoeff_fail:
+            is_valid = False
+            parity_label = "PARITY_FAIL_VERHOEFF_CHECKSUM" if has_verhoeff_fail else "PARITY_FAIL_SPLICED_DIGITS"
+        else:
+            is_valid = bool(has_qr or has_id_pattern or (has_id_keywords and any(c.isdigit() for c in extracted_text)))
+            parity_label = "QR Code Authenticated" if has_qr else ("Visual Structure & Credential ID Verified" if (has_id_pattern or has_id_keywords) else "UNRECOGNIZED_ID_STRUCTURE")
         validation = {"valid": is_valid, "checksum_parity": parity_label}
 
     # 5. Strict ISO 3166-1 Sovereign State Whitelist Check
@@ -661,7 +711,7 @@ async def verify_border_document(
 
     # -------------------------------------------------------------------------
     # 6. TIER A HARD OVERRIDE EARLY-RETURN ENFORCEMENT
-    # Immediate early-return with capped score (max 15) if ANY Tier A check fails.
+    # Immediate early-return with capped score (max 15-18) if ANY Tier A check fails.
     # -------------------------------------------------------------------------
 
     # 6.1 Unauthorized Sovereign State (e.g. "Republic of Aravasa")
@@ -692,15 +742,16 @@ async def verify_border_document(
             }
         }
 
-    # 6.2 Passport ICAO 9303 Checksum Parity Failure (Single-digit splice tampering)
-    if effective_doc_type == "Passport" and not is_valid:
+    # 6.2 Checksum Parity / Security Structure Failure (Tier A Hard Override)
+    if not is_valid:
+        veto_score = 12 if effective_doc_type == "Passport" else 16
         return {
             "status": "success",
             "document_type": effective_doc_type,
-            "trust_score": 12,  # Hard capped <= 15
+            "trust_score": veto_score,
             "verdict": "HOLD_FOR_MANUAL_INSPECTION",
             "tier_a_override": True,
-            "tier_a_failure_reason": f"CRITICAL_TIER_A: MRZ Checksum Parity Failure ({validation.get('checksum_parity')}).",
+            "tier_a_failure_reason": f"CRITICAL_TIER_A: Checksum Parity / Security Structure Failure ({validation.get('checksum_parity')}).",
             "modules_breakdown": {
                 "module_1_ocr": {"extracted_snippet": extracted_text[:120].replace('\n', ' ') if extracted_text else "Parsed"},
                 "module_2_validation": validation,

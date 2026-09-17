@@ -32,8 +32,10 @@ export default function Reports() {
         const score =
           typeof doc.confidenceScore === "number"
             ? doc.confidenceScore
+            : typeof doc.score === "number"
+            ? doc.score
             : checks.length > 0
-            ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore)
+            ? calculateAggregatedConfidenceScore(checks, doc.confidenceScore ?? doc.score)
             : 0;
 
         return {

@@ -153,14 +153,17 @@ export async function verifyBorderDocument(
   const kind = (docType.toLowerCase().includes("passport") ? "passport" : docType.toLowerCase().includes("aadhaar") || docType.toLowerCase().includes("national") ? "aadhaar" : docType.toLowerCase().includes("pan") ? "pan" : docType.toLowerCase().includes("driving") ? "driving_license" : detectDocumentType(file.name));
   const doc = await analyzeDocumentFile(file, kind);
 
-  const isTampered = doc.status === "likely_forged" || doc.score < 50;
+  const hasFlags = Array.isArray(doc.checks) && doc.checks.some((c: any) => c.result === "flag");
+  const isTampered = doc.status === "likely_forged" || doc.status === "needs_review" || doc.score < 75 || hasFlags;
+  const isVetoed = doc.score < 25 || doc.status === "likely_forged" || (Array.isArray(doc.checks) && doc.checks.some((c: any) => c.result === "flag" && (c.name?.includes("checksum") || c.name?.includes("signature") || c.name?.includes("issuer"))));
+
   return {
     status: "success",
     document_type: docType,
     trust_score: Math.round(doc.score),
-    verdict: doc.score >= 75 ? "CLEAR_ENTRY" : "HOLD_FOR_MANUAL_INSPECTION",
-    tier_a_override: doc.score < 20,
-    tier_a_failure_reason: doc.score < 20 ? "CRITICAL_TIER_A: Document Integrity Threshold Breached" : undefined,
+    verdict: doc.score >= 75 && !hasFlags ? "CLEAR_ENTRY" : "HOLD_FOR_MANUAL_INSPECTION",
+    tier_a_override: isVetoed,
+    tier_a_failure_reason: isVetoed ? "CRITICAL_TIER_A: Document Integrity Threshold Breached" : undefined,
     modules_breakdown: {
       module_1_ocr: {
         extracted_snippet: Object.entries(doc.extractedFields || {}).map(([k, v]) => `${k}: ${v}`).slice(0, 3).join(" | ") || "Parsed Specimen Telemetry",

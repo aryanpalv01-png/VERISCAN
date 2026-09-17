@@ -92,8 +92,8 @@ export function isModuleOfflineOrUninitialized(c: any): boolean {
   if (c.status === 503 || c.status === 501 || c.statusCode === 503 || c.statusCode === 501) return true;
   if (c.error || c.uninitialized || c.missingWeights || c.offline || c.notConfigured) return true;
 
-  // An active check with positive confidence and available flag is executed
-  if (c.available === true && typeof c.confidence === "number" && c.confidence > 0) {
+  // An active genuine check with passing confidence and available flag is executed
+  if (c.result === "pass" && c.available === true && typeof c.confidence === "number" && c.confidence >= 70) {
     return false;
   }
 
@@ -122,9 +122,16 @@ export function isModuleOfflineOrUninitialized(c: any): boolean {
     expl.includes("neutral score") ||
     expl.includes("neutral fallback") ||
     expl.includes("fallback to neutral") ||
+    expl.includes("scoped to") ||
+    expl.includes("ocr text is not available") ||
     expl.includes("dormant");
 
   if (isOfflineMention) return true;
+
+  // An active check with positive confidence and available flag is executed
+  if (c.available === true && typeof c.confidence === "number" && c.confidence > 0) {
+    return false;
+  }
 
   return false;
 }
@@ -253,10 +260,35 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
   const isSingleHeuristicFail = tierBFailures.length === 1;
 
   // HARD OVERRIDE ENFORCEMENT:
-  // Return immediately with a capped score (max 15) the moment ANY Tier A check fails.
+  // Return immediately with a capped score (strictly in veto range [15, 25]) the moment ANY Tier A check fails.
   // Do NOT include Tier A results as a weighted input into an averaging function.
   if (isTierAFailed) {
-    const earlyReturnScore = 15; // Strictly max 15
+    // Dynamic Tier A scoring: 15 to 24 based on failure severity
+    let earlyReturnScore = 15;
+    const isChecksumFail = tierAFailures.some((f) => f.toLowerCase().includes("checksum") || f.toLowerCase().includes("verhoeff") || f.toLowerCase().includes("identifier"));
+    const isQrFail = tierAFailures.some((f) => f.toLowerCase().includes("qr") || f.toLowerCase().includes("signature"));
+    const isIssuerFail = tierAFailures.some((f) => f.toLowerCase().includes("issuer") || f.toLowerCase().includes("unauthorized"));
+    const isSpoofFail = tierAFailures.some((f) => f.toLowerCase().includes("spoof") || f.toLowerCase().includes("replay"));
+
+    if (isIssuerFail) {
+      earlyReturnScore = 15;
+    } else if (isChecksumFail && isQrFail) {
+      earlyReturnScore = 16;
+    } else if (isChecksumFail) {
+      earlyReturnScore = 18;
+    } else if (isQrFail) {
+      earlyReturnScore = 17;
+    } else if (isSpoofFail) {
+      earlyReturnScore = 15;
+    } else {
+      const lowestTierAConf = active
+        .filter((c) => c.result === "flag" && isTierAFailure(c))
+        .map((c) => c.confidence)
+        .sort((a, b) => a - b)[0] ?? 10;
+      earlyReturnScore = Math.max(15, Math.min(24, Math.round(15 + lowestTierAConf * 0.1)));
+    }
+
+    const appliedPenalties = 100 - earlyReturnScore;
     return {
       score: earlyReturnScore,
       status: "likely_forged",
@@ -265,7 +297,7 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
       tierAFailures,
       tierBFailures,
       rawScore: earlyReturnScore,
-      penaltiesApplied: 85,
+      penaltiesApplied: appliedPenalties,
       unconfiguredModules,
       dormantNeuralChecks,
       activeModulesCount: active.length,
@@ -297,14 +329,16 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
 
   if (isCumulativeHeuristicFail) {
     // 2 or more visual/typography anomalies failing simultaneously:
-    // Apply substantial point deductions (-30 to -35 points per module), dropping sharply below 40.
+    // Apply dynamic point deductions (-30 to -35 points per module), dropping sharply below 40.
     for (const failureStr of tierBFailures) {
       const checkName = failureStr.split(":")[0]?.trim();
+      const checkObj = active.find((c) => c.checkName === checkName);
+      const conf = checkObj?.confidence ?? 20;
       const deduction =
         checkName === "ocr_typography_consistency"
-          ? 34
+          ? Math.round(35 - conf * 0.05)
           : checkName === "ela_compression_analysis"
-          ? 32
+          ? Math.round(34 - conf * 0.05)
           : checkName === "screenshot_capture_detection"
           ? 32
           : 30;
@@ -330,8 +364,9 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
       penaltiesApplied += mildDeduction;
     } else {
       // Standalone significant visual anomaly (e.g. editing software in metadata or font style mismatch):
-      // Deduct -28 to -30 points, placing document in Needs Review (65-75).
-      penaltiesApplied += 30;
+      // Deduct -28 to -32 points dynamically, placing document in Needs Review (65-72).
+      const conf = failedCheck?.confidence ?? 20;
+      penaltiesApplied += Math.round(32 - conf * 0.06);
     }
   }
 
@@ -340,8 +375,9 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
   const rawScore = score;
 
   // If cumulative heuristic failure (2+ Tier B flags), guarantee score drops sharply below 40 (< 40)
+  // Dynamic scale between 20 and 36, never settling at 50
   if (isCumulativeHeuristicFail) {
-    score = Math.min(36, score);
+    score = Math.max(18, Math.min(36, score));
   }
 
   // If single heuristic flag on genuine document with strong passes, protect verified status (> 80)
@@ -359,7 +395,7 @@ export function fuseForensicChecks(checks: ForensicModuleResult[]): FusionResult
     (c) => c.checkName === "structural_template_matching" && c.result === "flag"
   );
   if (templateFailed) {
-    score = Math.min(45, score);
+    score = Math.min(38, score);
   }
 
   // Realistic Optical Entropy & Positive Proof Scaling:
