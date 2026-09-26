@@ -95,6 +95,12 @@ export interface Translations {
   methodology_title: string;
   methodology_subtitle: string;
   methodology_badge: string;
+  method_step_1: string;
+  method_step_2: string;
+  method_step_3: string;
+  method_step_4: string;
+  method_step_5: string;
+  method_step_6: string;
   methodology_real_title: string;
   methodology_fake_title: string;
 
@@ -209,7 +215,7 @@ const DICTIONARY: Record<Language, Translations> = {
 
     hero_badge: "INSTITUTIONAL FORENSIC SCREENING ENGINE",
     hero_title: "Automated Document Forensic & Tampering Localization",
-    hero_subtitle: "Multi-layered forensic verification evaluating compression anomalies, typography consistency, mathematical checksums, and cryptographic signatures.",
+    hero_subtitle: "Automated forensic checks for identity documents.",
     btn_open_workspace: "Open Forensic Command Center",
     btn_ingest_file: "Ingest Specimen File",
     btn_analyzing: "Analyzing Telemetry...",
@@ -224,9 +230,15 @@ const DICTIONARY: Record<Language, Translations> = {
     hero_footer_standards: "ICAO Doc 9303 & UIDAI Statutory Standards",
     hero_footer_iso: "ISO 3166-1 Sovereign Issuing Authority Whitelist",
 
-    methodology_title: "Scientific Methodology: Real vs. Fake Verification",
+    methodology_title: "How verification works",
     methodology_subtitle: "How VeriScan analyzes pixel physics, cryptographic signatures, and micro-typography to rigorously differentiate genuine government credentials from synthetic forgeries.",
     methodology_badge: "MULTI-LAYER EVIDENTIARY AUDIT FRAMEWORK",
+    method_step_1: "Image integrity",
+    method_step_2: "Typography",
+    method_step_3: "ID number checks",
+    method_step_4: "Issuer signatures",
+    method_step_5: "Face and liveness",
+    method_step_6: "Template matching",
     methodology_real_title: "Genuine Document Characteristics",
     methodology_fake_title: "Tampered / Forged Indicators",
 
@@ -264,8 +276,8 @@ const DICTIONARY: Record<Language, Translations> = {
 
     footer_brand: "VeriScan // SIH-2026",
     footer_node: "National Evidentiary Document Screening Infrastructure",
-    footer_desc: "Developed for Ministry of Electronics and Information Technology (MeitY) · Government of India",
-    footer_privacy: "Zero-Retention Protocol · Ephemeral In-Memory Execution · Client-Side Encryption",
+    footer_desc: "SIH-2026 · Document verification prototype",
+    footer_privacy: "Prototype only · Avoid uploading real identity documents",
     nav_dashboard: "Command Center",
     nav_border: "Border Terminal",
     nav_verify: "Verify Document",
@@ -337,7 +349,7 @@ const DICTIONARY: Record<Language, Translations> = {
 
     hero_badge: "संस्थागत फोरेंसिक जांच प्रणाली",
     hero_title: "स्वचालित दस्तावेज़ फोरेंसिक एवं छेड़छाड़ पहचान",
-    hero_subtitle: "संपीड़न विसंगतियों, टाइपोग्राफी निरंतरता, गणितीय चेकसम और क्रिप्टोग्राफिक हस्ताक्षरों का बहुस्तरीय परीक्षण।",
+    hero_subtitle: "पहचान दस्तावेज़ों की स्वचालित फोरेंसिक जांच।",
     btn_open_workspace: "फोरेंसिक कमांड सेंटर खोलें",
     btn_ingest_file: "दस्तावेज़ नमूना अपलोड करें",
     btn_analyzing: "विश्लेषण जारी है...",
@@ -352,9 +364,15 @@ const DICTIONARY: Record<Language, Translations> = {
     hero_footer_standards: "ICAO Doc 9303 एवं UIDAI वैधानिक मानक",
     hero_footer_iso: "ISO 3166-1 अधिकृत संप्रभु जारीकर्ता सूची",
 
-    methodology_title: "वैज्ञानिक पद्धति: असली बनाम नकली दस्तावेज़ पहचान",
+    methodology_title: "दस्तावेज़ सत्यापन कैसे होता है",
     methodology_subtitle: "वेरीस्कैन किस प्रकार पिक्सेल भौतिकी, क्रिप्टोग्राफिक श्रृंखला और सूक्ष्म-टाइपोग्राफी का विश्लेषण कर असली पहचान पत्रों और नकली प्रतियों में अंतर करता है।",
     methodology_badge: "बहुस्तरीय साक्ष्य सत्यापन ढांचा",
+    method_step_1: "छवि की अखंडता",
+    method_step_2: "टाइपोग्राफी",
+    method_step_3: "पहचान संख्या जांच",
+    method_step_4: "जारीकर्ता के हस्ताक्षर",
+    method_step_5: "चेहरा और जीवंतता",
+    method_step_6: "टेम्पलेट मिलान",
     methodology_real_title: "असली दस्तावेज़ की विशेषताएं",
     methodology_fake_title: "जाली / छेड़छाड़ के संकेत",
 
@@ -392,8 +410,8 @@ const DICTIONARY: Record<Language, Translations> = {
 
     footer_brand: "वेरीस्कैन // SIH-2026",
     footer_node: "राष्ट्रीय दस्तावेज़ फोरेंसिक जांच प्रणाली",
-    footer_desc: "इलेक्ट्रॉनिक्स और सूचना प्रौद्योगिकी मंत्रालय (MeitY) हेतु विकसित · भारत सरकार",
-    footer_privacy: "शून्य-डेटा संचय · मेमोरी में तत्काल निष्पादन · क्लाइंट-साइड एन्क्रिप्शन",
+    footer_desc: "SIH-2026 · दस्तावेज़ सत्यापन प्रोटोटाइप",
+    footer_privacy: "प्रोटोटाइप · वास्तविक पहचान दस्तावेज़ अपलोड न करें",
     nav_dashboard: "कमांड सेंटर",
     nav_border: "सीमा टर्मिनल",
     nav_verify: "दस्तावेज़ जांच",
@@ -465,7 +483,7 @@ const DICTIONARY: Record<Language, Translations> = {
 
     hero_badge: "संस्थात्मक फॉरेन्सिक तपासणी प्रणाली",
     hero_title: "स्वयंचलित दस्तऐवज फॉरेन्सिक आणि छेडछाड शोध",
-    hero_subtitle: "कंप्रेशन त्रुटी, टायपोग्राफी सातत्य, गणितीय चेकसम आणि क्रिप्टोग्राफिक स्वाक्षऱ्यांची बहुस्तरीय पडताळणी.",
+    hero_subtitle: "ओळख दस्तऐवजांसाठी स्वयंचलित फॉरेन्सिक तपासणी.",
     btn_open_workspace: "फॉरेन्सिक कमांड सेंटर उघडा",
     btn_ingest_file: "दस्तऐवज नमुना दाखल करा",
     btn_analyzing: "विश्लेषण सुरू आहे...",
@@ -480,9 +498,15 @@ const DICTIONARY: Record<Language, Translations> = {
     hero_footer_standards: "ICAO Doc 9303 आणि UIDAI वैधानिक मानके",
     hero_footer_iso: "ISO 3166-1 अधिकृत सार्वभौम जारीकर्ता यादी",
 
-    methodology_title: "वैज्ञानिक कार्यपद्धती: खरे विरुद्ध बनावट दस्तऐवज पडताळणी",
+    methodology_title: "दस्तऐवज पडताळणी कशी होते",
     methodology_subtitle: "व्हेरिस्कॅन पिक्सेल भौतिकशास्त्र, क्रिप्टोग्राफिक साखळी आणि सूक्ष्म-टायपोग्राफीचे विश्लेषण करून खऱ्या कागदपत्रांची आणि बनावट प्रतींची खात्री कशी करते.",
     methodology_badge: "बहुस्तरीय पुरावा पडताळणी आराखडा",
+    method_step_1: "प्रतिमेची अखंडता",
+    method_step_2: "टायपोग्राफी",
+    method_step_3: "ओळख क्रमांक तपासणी",
+    method_step_4: "जारीकर्त्याच्या स्वाक्षऱ्या",
+    method_step_5: "चेहरा आणि सजीवता",
+    method_step_6: "टेम्पलेट जुळणी",
     methodology_real_title: "खऱ्या दस्तऐवजाची वैशिष्ट्ये",
     methodology_fake_title: "बनावट / छेडछाडीचे निर्देशक",
 
@@ -520,8 +544,8 @@ const DICTIONARY: Record<Language, Translations> = {
 
     footer_brand: "व्हेरिस्कॅन // SIH-2026",
     footer_node: "राष्ट्रीय दस्तऐवज फॉरेन्सिक तपासणी यंत्रणा",
-    footer_desc: "इलेक्ट्रॉनिक्स आणि माहिती तंत्रज्ञान मंत्रालय (MeitY) साठी विकसित · भारत सरकार",
-    footer_privacy: "शून्य-डेटा संचय · तात्काळ इन-मेमरी प्रक्रिया · क्लायंट-साइड एन्क्रिप्शन",
+    footer_desc: "SIH-2026 · दस्तऐवज पडताळणी प्रोटोटाइप",
+    footer_privacy: "प्रोटोटाइप · वास्तविक ओळख दस्तऐवज अपलोड करू नका",
     nav_dashboard: "कमांड सेंटर",
     nav_border: "सीमा टर्मिनल",
     nav_verify: "दस्तऐवज तपासणी",

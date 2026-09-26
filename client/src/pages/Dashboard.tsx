@@ -436,9 +436,9 @@ export default function Dashboard() {
       )}
 
       {/* Main Forensic Workspace: Strict Asymmetric 12-Column Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3.5 xl:h-[calc(100vh-148px)] xl:overflow-hidden">
+      <div className="grid min-w-0 grid-cols-1 gap-3.5 xl:grid-cols-12 xl:h-[calc(100vh-148px)] xl:overflow-hidden">
         {/* Columns 1-5: Interactive Document Specimen Inspector */}
-        <div className="xl:col-span-5 h-full flex flex-col justify-between overflow-hidden">
+        <div className="min-w-0 flex flex-col justify-between xl:col-span-5 xl:h-full xl:overflow-hidden">
           {/* Mobile/Tablet Accordion Drawer Trigger (<1200px) */}
           <div className="xl:hidden mb-2">
             <button
@@ -456,7 +456,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className={`${isMobileInspectorOpen ? "block" : "hidden xl:block"} h-full`}>
+          <div className={`${isMobileInspectorOpen ? "block" : "hidden xl:block"} min-w-0 xl:h-full`}>
             <ForensicSpecimenLoupe
               document={activeDocument}
               selectedCheckId={selectedCheckId}
@@ -468,7 +468,7 @@ export default function Dashboard() {
         </div>
 
         {/* Columns 6-12: High-Density Forensic Telemetry Matrix (All 11 Checks) */}
-        <div className="xl:col-span-7 h-full flex flex-col justify-between overflow-hidden">
+        <div className="min-w-0 flex flex-col justify-between xl:col-span-7 xl:h-full xl:overflow-hidden">
           <ForensicParametersTable
             document={activeDocument}
             selectedCheckId={selectedCheckId}

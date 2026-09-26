@@ -248,21 +248,21 @@ export function ForensicSpecimenLoupe({
   };
 
   return (
-    <div className="flex flex-col justify-between p-3.5 sm:p-4 border border-slate-200/80 bg-white font-sans rounded-xl shadow-xs hover:shadow-sm transition-all h-full">
+    <div className="flex min-w-0 flex-col justify-between p-3.5 sm:p-4 border border-slate-200/80 bg-white font-sans rounded-xl shadow-xs hover:shadow-sm transition-all h-full">
       {/* Specimen Header & Control Bar */}
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
               <Crosshair className="h-3.5 w-3.5 text-indigo-600" />
               SPECIMEN INSPECTOR
             </span>
-            <span className="text-xs sm:text-sm text-slate-900 font-bold truncate max-w-[180px] sm:max-w-[240px]">
+            <span className="min-w-0 text-xs sm:text-sm text-slate-900 font-bold truncate max-w-[180px] sm:max-w-[240px]">
               {document.filename}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-[11px] border border-slate-200/60">
               {document.fileSize || "1.4 MB"}
             </span>
@@ -382,7 +382,7 @@ export function ForensicSpecimenLoupe({
           <button
             type="button"
             onClick={() => setShowCoordinates(!showCoordinates)}
-            className={`ml-auto px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-colors cursor-pointer ${
+            className={`ml-0 px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-colors cursor-pointer sm:ml-auto ${
               showCoordinates
                 ? "border-indigo-300 bg-indigo-50 text-indigo-700"
                 : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
@@ -394,8 +394,8 @@ export function ForensicSpecimenLoupe({
         </div>
 
         {/* Real-Time Coordinate HUD Bar */}
-        <div className="mt-2 flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-xs text-slate-600">
-          <div className="flex items-center gap-2">
+        <div className="mt-2 flex flex-col gap-1 rounded-lg border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="text-indigo-600 font-bold text-[11px]">COORDINATES:</span>
             {cursorCoord ? (
               <span className="text-slate-800 font-medium">
@@ -407,7 +407,7 @@ export function ForensicSpecimenLoupe({
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
             <span>LAYER: <strong className="text-slate-800 uppercase font-semibold">{activeLayer}</strong></span>
             <span>PROJECTION: 1:1</span>
           </div>

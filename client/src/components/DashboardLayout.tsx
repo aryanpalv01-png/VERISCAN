@@ -202,7 +202,7 @@ function DashboardLayoutContent({
       {/* Official Government of India Top Masthead */}
       <GovMasthead theme="light" />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-x-hidden">
         {/* Sidebar */}
         <div ref={sidebarRef} className="relative">
           <Sidebar
@@ -334,7 +334,7 @@ function DashboardLayoutContent({
         </div>
 
         {/* Main Content Pane */}
-        <SidebarInset className="min-h-screen bg-[#f8fafc] text-slate-900">
+        <SidebarInset className="min-h-screen min-w-0 flex-1 bg-[#f8fafc] text-slate-900">
           {isMobile && (
             <div className="sticky top-0 z-40 flex h-11 items-center gap-3 border-b border-slate-200 bg-white px-3">
               <SidebarTrigger className="h-7 w-7 rounded-md border border-slate-200 bg-slate-50" />
@@ -343,8 +343,8 @@ function DashboardLayoutContent({
               </span>
             </div>
           )}
-          <main className="p-2.5 sm:p-4">
-            <div className="mx-auto max-w-[1600px]">{children}</div>
+          <main className="min-w-0 p-2.5 sm:p-4">
+            <div className="mx-auto min-w-0 max-w-[1600px]">{children}</div>
           </main>
         </SidebarInset>
       </div>

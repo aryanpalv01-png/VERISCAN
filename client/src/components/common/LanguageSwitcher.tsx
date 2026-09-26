@@ -31,7 +31,8 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
               title={opt.label}
               aria-label={`Switch language to ${opt.label}`}
             >
-              {compact ? opt.short : opt.label}
+              <span className="hidden sm:inline">{compact ? opt.short : opt.label}</span>
+              <span className="sm:hidden">{opt.short}</span>
             </button>
           );
         })}

@@ -21,7 +21,7 @@ import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 
-function WorkspaceRoute({ children, allowGuest = true }: { children: React.ReactNode; allowGuest?: boolean }) {
+function WorkspaceRoute({ children, allowGuest = false }: { children: React.ReactNode; allowGuest?: boolean }) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 

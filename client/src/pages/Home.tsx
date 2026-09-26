@@ -51,33 +51,9 @@ export default function Home() {
   const [terminalFile, setTerminalFile] = useState<File | null>(null);
   const [terminalDocType, setTerminalDocType] = useState<string>("National ID");
   const [terminalLoading, setTerminalLoading] = useState<boolean>(false);
-  const [terminalResult, setTerminalResult] = useState<BorderVerificationResponse | null>({
-    status: "success",
-    document_type: "National ID",
-    trust_score: 96,
-    verdict: "CLEAR_ENTRY",
-    tier_a_override: false,
-    modules_breakdown: {
-      module_1_ocr: { extracted_snippet: "UIDAI AADHAAR · RAHUL SHARMA · DOB: 12/08/1992" },
-      module_2_validation: {
-        valid: true,
-        checksum_parity: "VERIFIED (Verhoeff Dihedral Matrix Matched)",
-        compliance: "Statutory UIDAI Standard Verified",
-      },
-      module_3_tampering: {
-        tampered: false,
-        compression_anomaly_score: 3.8,
-        sharpness_variance: 118.4,
-        forensic_status: "PRISTINE PIXEL INTEGRITY",
-      },
-      module_4_face_verification: {
-        match_score: "98.4%",
-        liveness_check: "Passed (Live 3D Depth Matrix)",
-      },
-    },
-  });
-  const [previewImage, setPreviewImage] = useState<string | null>("/test_samples/sample_aadhaar.png");
-  const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>("aadhaar_rahul_sharma");
+  const [terminalResult, setTerminalResult] = useState<BorderVerificationResponse | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null);
 
   // Execute screening for uploaded file or current terminal state
   const handleExecuteScreening = async (fileToScreen?: File, classToUse?: string) => {
@@ -345,15 +321,16 @@ export default function Home() {
                   variant="outline"
                   size="sm"
                   onClick={() => setLocation("/auth/register")}
+                  aria-label={t("register")}
                   className="text-xs font-semibold text-indigo-700 border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 rounded-lg shadow-xs gap-1.5 h-8 px-3 cursor-pointer"
                 >
                   <UserPlus className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>{t("register")}</span>
+                  <span className="hidden sm:inline">{t("register")}</span>
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => setLocation("/dashboard")}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs hover:shadow transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
+                  className="hidden sm:inline-flex bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs hover:shadow transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
                 >
                   <span>{t("nav_dashboard")}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -369,15 +346,6 @@ export default function Home() {
         <div className="relative overflow-hidden pt-10 pb-10 sm:pt-14 sm:pb-12 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/70">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="text-center max-w-3xl mx-auto space-y-4">
-              {/* Live Status Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span>{t("hero_badge")}</span>
-              </div>
-
               {/* Multilingual Headline */}
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
                 {t("hero_title")}
@@ -419,95 +387,39 @@ export default function Home() {
                 />
               </div>
 
-              {/* Officer Portal Gateway */}
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-white shadow-xs">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                    <span>{t("officer_portal")}</span>
-                  </div>
-                  {isAuthenticated ? (
-                    <span className="text-xs font-semibold text-emerald-700">
-                      {t("signed_in_as")} {user?.email || t("officer")}
-                    </span>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setLocation("/auth/login")}
-                        className="h-7 px-2.5 text-xs font-bold text-slate-800 hover:text-indigo-600 hover:bg-slate-100 rounded-lg gap-1 cursor-pointer"
-                      >
-                        <LogIn className="h-3.5 w-3.5 text-indigo-600" />
-                        <span>{t("login")}</span>
-                      </Button>
-                      <span className="text-slate-200">|</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setLocation("/auth/register")}
-                        className="h-7 px-2.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50/60 border-indigo-200 hover:bg-indigo-100 rounded-lg gap-1 cursor-pointer shadow-xs"
-                      >
-                        <UserPlus className="h-3.5 w-3.5 text-indigo-600" />
-                        <span>{t("register")}</span>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
             </div>
 
-            {/* Hero Footer / Institutional Trust Ribbon */}
-            <div className="mt-8 pt-6 border-t border-slate-200/80 max-w-5xl mx-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
-                  <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold leading-tight">{t("hero_footer_zero_disk")}</span>
-                </div>
-
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
-                  <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
-                    <Lock className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold leading-tight">{t("hero_footer_sha")}</span>
-                </div>
-
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
-                  <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
-                    <FileCheck className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold leading-tight">{t("hero_footer_standards")}</span>
-                </div>
-
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 shadow-xs">
-                  <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-                    <Cpu className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold leading-tight">{t("hero_footer_iso")}</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Forensic Methodology Section: Differentiating Real vs. Fake Documents */}
         <section className="py-14 sm:py-18 bg-white border-b border-slate-200/80">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold shadow-xs mb-3">
-                <Layers className="h-3.5 w-3.5 text-indigo-600" />
-                <span>{t("methodology_badge")}</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
+            <div className="mx-auto mb-7 max-w-3xl text-center">
+              <h2 className="text-xl font-bold text-slate-900">
                 {t("methodology_title")}
               </h2>
-              <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
-                {t("methodology_subtitle")}
-              </p>
             </div>
 
+            <div className="mx-auto grid max-w-5xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+              {[
+                t("method_step_1"),
+                t("method_step_2"),
+                t("method_step_3"),
+                t("method_step_4"),
+                t("method_step_5"),
+                t("method_step_6"),
+              ].map((method, index) => (
+                <div key={method} className="flex min-w-0 items-center gap-2 border-b border-slate-200 py-2 text-sm font-medium text-slate-700">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">
+                    {index + 1}
+                  </span>
+                  <span>{method}</span>
+                </div>
+              ))}
+            </div>
+
+            {false && <>
             {/* 6 Core Pillars Side-by-Side Comparison Matrix */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Pillar 1: ELA */}
@@ -858,6 +770,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            </>}
           </div>
         </section>
       </main>
@@ -920,6 +833,14 @@ export default function Home() {
               {t("footer_privacy")}
             </span>
           </div>
+
+          <nav aria-label="Government resources" className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-600 sm:justify-start">
+            <a href="https://www.india.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Government of India</a>
+            <a href="https://www.meity.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">MeitY</a>
+            <a href="https://www.digitalindia.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Digital India</a>
+            <a href="https://www.mygov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">MyGov</a>
+            <a href="https://uidai.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">UIDAI</a>
+          </nav>
         </div>
       </footer>
     </div>
