@@ -148,6 +148,23 @@ export interface Translations {
   nav_verify: string;
   nav_history: string;
   nav_settings: string;
+  summary_title: string;
+  specimen_id: string;
+  core_checks: string;
+  check_ocr: string;
+  check_checksum: string;
+  check_id_checksum: string;
+  check_ela: string;
+  check_passed: string;
+  check_flagged: string;
+  check_unavailable: string;
+  system_directive: string;
+  directive_clear: string;
+  directive_hold: string;
+  verify_specimen_action: string;
+  verifying_specimen: string;
+  recent_specimens: string;
+  open_audit_ledger: string;
 }
 
 const DICTIONARY: Record<Language, Translations> = {
@@ -281,9 +298,26 @@ const DICTIONARY: Record<Language, Translations> = {
     footer_privacy: "Prototype only · Avoid uploading real identity documents",
     nav_dashboard: "Command Center",
     nav_border: "Border Terminal",
-    nav_verify: "Verify Document",
+    nav_verify: "Verify Specimen",
     nav_history: "Audit Ledger",
     nav_settings: "Settings",
+    summary_title: "Verification summary",
+    specimen_id: "Specimen ID",
+    core_checks: "Core checks",
+    check_ocr: "OCR parsing",
+    check_checksum: "ICAO 9303 checksum",
+    check_id_checksum: "Document checksum",
+    check_ela: "ELA tamper detection",
+    check_passed: "Passed",
+    check_flagged: "Flagged",
+    check_unavailable: "Not available",
+    system_directive: "System directive",
+    directive_clear: "CLEAR ENTRY",
+    directive_hold: "HOLD FOR MANUAL INSPECTION",
+    verify_specimen_action: "Verify specimen",
+    verifying_specimen: "Checking...",
+    recent_specimens: "Recent specimens",
+    open_audit_ledger: "Open audit ledger",
   },
   hi: {
     portal_title: "वेरीस्कैन फोरेंसिक कमांड सेंटर",
@@ -415,9 +449,26 @@ const DICTIONARY: Record<Language, Translations> = {
     footer_privacy: "प्रोटोटाइप · वास्तविक पहचान दस्तावेज़ अपलोड न करें",
     nav_dashboard: "कमांड सेंटर",
     nav_border: "सीमा टर्मिनल",
-    nav_verify: "दस्तावेज़ जांच",
+    nav_verify: "नमूना सत्यापित करें",
     nav_history: "ऑडिट बहीखाता",
     nav_settings: "सेटिंग्स",
+    summary_title: "सत्यापन सारांश",
+    specimen_id: "नमूना आईडी",
+    core_checks: "मुख्य जांच",
+    check_ocr: "OCR पाठ पहचान",
+    check_checksum: "ICAO 9303 चेकसम",
+    check_id_checksum: "दस्तावेज़ चेकसम",
+    check_ela: "ELA छेड़छाड़ जांच",
+    check_passed: "सफल",
+    check_flagged: "चिह्नित",
+    check_unavailable: "उपलब्ध नहीं",
+    system_directive: "सिस्टम निर्देश",
+    directive_clear: "प्रवेश स्वीकृत",
+    directive_hold: "मानवीय जांच के लिए रोकें",
+    verify_specimen_action: "नमूना सत्यापित करें",
+    verifying_specimen: "जांच जारी है...",
+    recent_specimens: "हाल के नमूने",
+    open_audit_ledger: "ऑडिट बहीखाता खोलें",
   },
   mr: {
     portal_title: "व्हेरिस्कॅन फॉरेन्सिक कमांड सेंटर",
@@ -549,9 +600,26 @@ const DICTIONARY: Record<Language, Translations> = {
     footer_privacy: "प्रोटोटाइप · वास्तविक ओळख दस्तऐवज अपलोड करू नका",
     nav_dashboard: "कमांड सेंटर",
     nav_border: "सीमा टर्मिनल",
-    nav_verify: "दस्तऐवज तपासणी",
+    nav_verify: "नमुना पडताळा",
     nav_history: "ऑडिट नोंदवही",
     nav_settings: "सेटिंग्ज",
+    summary_title: "पडताळणी सारांश",
+    specimen_id: "नमुन्याचा आयडी",
+    core_checks: "मुख्य तपासण्या",
+    check_ocr: "OCR मजकूर ओळख",
+    check_checksum: "ICAO 9303 चेकसम",
+    check_id_checksum: "दस्तऐवज चेकसम",
+    check_ela: "ELA छेडछाड तपासणी",
+    check_passed: "उत्तीर्ण",
+    check_flagged: "चिन्हांकित",
+    check_unavailable: "उपलब्ध नाही",
+    system_directive: "सिस्टम निर्देश",
+    directive_clear: "प्रवेश मंजूर",
+    directive_hold: "मानवी तपासणीसाठी थांबवा",
+    verify_specimen_action: "नमुना पडताळा",
+    verifying_specimen: "तपासणी सुरू आहे...",
+    recent_specimens: "अलीकडील नमुने",
+    open_audit_ledger: "ऑडिट नोंदवही उघडा",
   },
 };
 

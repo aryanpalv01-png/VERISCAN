@@ -27,6 +27,8 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { safeStorageGetItem, safeStorageSetItem } from "@/lib/safeStorage";
 
 export function Auth({ params }: { params?: { mode?: string } }) {
   const [location, setLocation] = useLocation();
@@ -55,7 +57,9 @@ export function Auth({ params }: { params?: { mode?: string } }) {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   // Login form state
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginEmail, setLoginEmail] = useState(
+    () => safeStorageGetItem("localStorage", "veriscan_user_email") || ""
+  );
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
@@ -146,6 +150,12 @@ export function Auth({ params }: { params?: { mode?: string } }) {
         );
       }
 
+      if (supabaseResult.data?.user?.identities?.length === 0) {
+        throw new Error("An account with this email already exists. Please sign in instead.");
+      }
+
+      safeStorageSetItem("localStorage", "veriscan_user_email", cleanEmail);
+
       if (supabaseResult.data?.session?.user) {
         try {
           await register({
@@ -225,8 +235,11 @@ export function Auth({ params }: { params?: { mode?: string } }) {
     } catch (err: any) {
       console.error("LOGIN_ERROR:", err);
       const msg = err?.message || "Invalid email or password. Please check your credentials.";
-      setError(msg);
-      toast.error(`Authentication Error: ${msg}`);
+      const userMessage = /email not confirmed/i.test(msg)
+        ? "Please confirm your email using the link we sent before signing in."
+        : msg;
+      setError(userMessage);
+      toast.error(`Authentication Error: ${userMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -377,12 +390,15 @@ export function Auth({ params }: { params?: { mode?: string } }) {
               </span>
             </div>
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 transition-colors py-1.5 px-3 rounded-lg hover:bg-slate-100 font-medium"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Home
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher compact />
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 transition-colors py-1.5 px-3 rounded-lg hover:bg-slate-100 font-medium"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Home
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -625,7 +641,7 @@ export function Auth({ params }: { params?: { mode?: string } }) {
                   Account Registration Complete
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-emerald-800">
-                  Your credentials have been recorded. You can now sign in to your workspace.
+                  Confirm your email using the link we sent. Then sign in with the password you created.
                 </p>
               </div>
 

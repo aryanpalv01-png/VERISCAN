@@ -22,14 +22,10 @@ import {
 import { useIsMobile } from "@/hooks/useMobile";
 import { getInitials } from "@/lib/veriscan";
 import {
-  FileCheck2,
+  ClipboardList,
   FileSearch,
-  History,
-  LayoutDashboard,
   LogOut,
   PanelLeft,
-  Settings2,
-  ShieldCheck,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -39,15 +35,6 @@ import { AshokaChakra } from "./VeriScanLogo";
 import { GovMasthead } from "./common/GovMasthead";
 import { useI18n } from "@/contexts/I18nContext";
 import { safeStorageGetItem, safeStorageSetItem } from "@/lib/safeStorage";
-
-const menuItems = [
-  { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
-  { icon: ShieldCheck, label: "Border Terminal", path: "/border" },
-  { icon: FileSearch, label: "Verify Document", path: "/verify" },
-  { icon: FileCheck2, label: "Verdicts & Reports", path: "/reports" },
-  { icon: History, label: "Audit Ledger", path: "/history" },
-  { icon: Settings2, label: "Settings", path: "/settings" },
-];
 
 const SIDEBAR_WIDTH_KEY = "veriscan-sidebar-width";
 const DEFAULT_WIDTH = 260;
@@ -156,19 +143,14 @@ function DashboardLayoutContent({
   const { t } = useI18n();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: t("nav_dashboard"), path: "/dashboard" },
-    { icon: ShieldCheck, label: t("nav_border"), path: "/border" },
     { icon: FileSearch, label: t("nav_verify"), path: "/verify" },
-    { icon: FileCheck2, label: "Verdicts & Reports", path: "/reports" },
-    { icon: History, label: t("nav_history"), path: "/history" },
-    { icon: Settings2, label: t("nav_settings"), path: "/settings" },
+    { icon: ClipboardList, label: t("nav_history"), path: "/history" },
   ];
 
   const activeMenuItem =
     menuItems.find(
       (item) =>
-        location === item.path ||
-        (item.path !== "/dashboard" && location.startsWith(item.path))
+        location === item.path || location.startsWith(`${item.path}/`)
     ) || menuItems[0];
 
   useEffect(() => {
@@ -267,21 +249,6 @@ function DashboardLayoutContent({
                 })}
               </SidebarMenu>
 
-              {!isCollapsed && (
-                <div className="mt-auto px-1 pt-4">
-                  <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-xs shadow-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-600">
-                      <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={2} />
-                      <span className="text-[11px] font-bold text-slate-800">
-                        Evidentiary Node
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
-                      Statutory Sandbox · 11 Active Parameters
-                    </p>
-                  </div>
-                </div>
-              )}
             </SidebarContent>
 
             <SidebarFooter className="border-t border-slate-200/80 p-2.5 bg-white">

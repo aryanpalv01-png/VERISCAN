@@ -1,106 +1,35 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { fileToBase64, readLocalScans, writeLocalScan } from "@/lib/scanStore";
 import {
   analyzeDocumentFile,
-  analyzeDocumentDirectly,
   calculateAggregatedConfidenceScore,
   detectDocumentType,
   DocumentKind,
-  formatDate,
-  formatDocumentType,
   demoDocuments,
-  statusMeta,
   VerificationDocument,
   VerificationCheck,
-  DocumentStatus,
   formatCheckName,
   getCheckCategory,
 } from "@/lib/veriscan";
-import { ForensicSpecimenLoupe } from "@/components/ForensicSpecimenLoupe";
 import {
-  ForensicParametersTable,
-  ForensicParamDefinition,
-} from "@/components/ForensicParametersTable";
-
-import {
-  ArrowRight,
-  ShieldCheck,
-  ShieldAlert,
-  AlertTriangle,
   UploadCloud,
-  FileCheck2,
-  LockKeyhole,
-  CheckCircle2,
-  Crosshair,
-  Layers,
-  Sparkles,
-  ExternalLink,
-  ChevronRight,
-  Activity,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { toast } from "sonner";
-
-function CircularScoreGauge({ score, size = 42 }: { score: number; size?: number }) {
-  const strokeWidth = 4;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(100, Math.round(score)));
-  const offset = circumference - (clamped / 100) * circumference;
-
-  const strokeColor =
-    clamped >= 80 ? "#059669" : clamped >= 50 ? "#d97706" : "#dc2626";
-
-  return (
-    <div
-      className="relative inline-flex items-center justify-center shrink-0"
-      style={{ width: size, height: size }}
-    >
-      <svg className="w-full h-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#e2e8f0"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          fill="none"
-          className="transition-all duration-500 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center font-sans">
-        <span className="text-[11px] font-extrabold text-slate-900 leading-none">{clamped}</span>
-        <span className="text-[7.5px] text-slate-400 font-semibold leading-none mt-0.5">%</span>
-      </div>
-    </div>
-  );
-}
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function Dashboard() {
-  const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { t } = useI18n();
   const userIdentifier = user?.email || user?.openId || "guest";
 
   const [localScans, setLocalScans] = useState<VerificationDocument[]>(() =>
     readLocalScans(userIdentifier)
   );
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  const [selectedCheckId, setSelectedCheckId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState("");
-  const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentFileRef = useRef<File | undefined>(undefined);
@@ -165,9 +94,7 @@ export default function Dashboard() {
       writeLocalScan(newDoc, userIdentifier);
       setLocalScans(readLocalScans(userIdentifier));
       setSelectedDocId(newDoc.id);
-      toast.success("Specimen Ingested", {
-        description: `Verified ${activeCount}/11 modules with score ${newDoc.score}/100`,
-      });
+      toast.success("Specimen checked");
     },
     onError: async (error) => {
       if (currentFileRef.current) {
@@ -306,119 +233,37 @@ export default function Dashboard() {
     }
   };
 
-  const handleSelectCheck = (check: VerificationCheck) => {
-    setSelectedCheckId(check.id);
-  };
-
-  const handleSelectParam = (
-    param: ForensicParamDefinition,
-    matched?: VerificationCheck
-  ) => {
-    if (matched) {
-      setSelectedCheckId(matched.id);
-    } else {
-      setSelectedCheckId(param.id);
-    }
-  };
-
   // Active document telemetry helpers
   const isVerified = activeDocument.status === "verified";
-  const isForged = activeDocument.status === "likely_forged";
+  const coreChecks = [
+    {
+      label: t("check_ocr"),
+      matches: (check: VerificationCheck) => /ocr|text extraction/.test(`${check.id ?? ""} ${check.name ?? ""} ${(check as any).checkName ?? ""}`.toLowerCase()),
+    },
+    {
+      label: activeDocument.type === "passport" ? t("check_checksum") : t("check_id_checksum"),
+      matches: (check: VerificationCheck) => /checksum|verhoeff|identifier|icao/.test(`${check.id ?? ""} ${check.name ?? ""} ${(check as any).checkName ?? ""}`.toLowerCase()),
+    },
+    {
+      label: t("check_ela"),
+      matches: (check: VerificationCheck) => /\bela\b|compression/.test(`${check.id ?? ""} ${check.name ?? ""} ${(check as any).checkName ?? ""}`.toLowerCase()),
+    },
+  ].map((definition) => ({
+    ...definition,
+    result: activeDocument.checks?.find(definition.matches)?.result,
+  }));
 
   return (
     <div className="mx-auto w-full space-y-3 font-sans">
-      {/* Command Header: Minimalist Top Nav (Zero Fluff, Zero Explanatory Text) */}
-      <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 sm:px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white shadow-xs">
-        {/* Left: Live System Health Indicator & Active Project Target */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            <span className="font-extrabold text-slate-900 tracking-tight text-sm">
-              VeriScan // SIH-2026
-            </span>
-          </div>
-
-          <span className="hidden sm:inline text-slate-300">|</span>
-
-          {/* Active Specimen Chip */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="font-semibold text-slate-900 truncate max-w-[180px] lg:max-w-[240px]">
-              {activeDocument.filename}
-            </span>
-            <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 font-mono">
-              {activeDocument.reference}
-            </span>
-          </div>
-        </div>
-
-        {/* Center: Live Bayesian Integrity Score & Verdict */}
-        <div className="flex items-center gap-3">
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-              isVerified
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                : isForged
-                ? "border border-red-200 bg-red-50 text-red-700"
-                : "border border-amber-200 bg-amber-50 text-amber-700"
-            }`}
-          >
-            {isVerified ? (
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            ) : (
-              <ShieldAlert className="h-3.5 w-3.5 text-red-600" />
-            )}
-            <span>{statusMeta[activeDocument.status as DocumentStatus]?.label || "Verified Genuine"}</span>
-          </span>
-
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <CircularScoreGauge score={activeDocument.score} size={36} />
-            <div className="hidden md:block text-left">
-              <div className="text-[9.5px] uppercase font-bold text-slate-400 tracking-wider">Score</div>
-              <div className="text-xs font-extrabold text-slate-900 leading-none">
-                {activeDocument.score}/100
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Rapid File-Drop Zone Button & Quick Actions */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={createScan.isPending || isAnalyzing}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 text-xs shadow-xs hover:shadow transition-all cursor-pointer disabled:opacity-50"
-          >
-            <UploadCloud className="h-3.5 w-3.5" />
-            <span>{createScan.isPending || isAnalyzing ? "Analyzing Specimen..." : "+ Ingest Specimen"}</span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                handleFileIngest(e.target.files[0]);
-              }
-            }}
-          />
-
-          <Link href={`/report/${activeDocument.id}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-indigo-600 text-xs font-semibold gap-1 px-2.5 rounded-lg shadow-xs"
-            >
-              <span>Dossier</span>
-              <ExternalLink className="h-3 w-3 text-indigo-600" />
-            </Button>
-          </Link>
-        </div>
-      </header>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={(event) => {
+          if (event.target.files?.[0]) handleFileIngest(event.target.files[0]);
+        }}
+      />
 
       {uploadError && (
         <div
@@ -435,67 +280,71 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Main Forensic Workspace: Strict Asymmetric 12-Column Grid */}
-      <div className="grid min-w-0 grid-cols-1 gap-3.5 xl:grid-cols-12 xl:h-[calc(100vh-148px)] xl:overflow-hidden">
-        {/* Columns 1-5: Interactive Document Specimen Inspector */}
-        <div className="min-w-0 flex flex-col justify-between xl:col-span-5 xl:h-full xl:overflow-hidden">
-          {/* Mobile/Tablet Accordion Drawer Trigger (<1200px) */}
-          <div className="xl:hidden mb-2">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" aria-labelledby="verification-summary-title">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            <h1 id="verification-summary-title" className="text-base font-semibold text-slate-900">{t("summary_title")}</h1>
+            <p className="mt-0.5 truncate text-xs text-slate-500">{t("specimen_id")}: {activeDocument.reference || activeDocument.id}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
+              isVerified ? "border-emerald-200 bg-emerald-50 text-emerald-800" :
+              activeDocument.status === "likely_forged" ? "border-rose-200 bg-rose-50 text-rose-800" :
+              "border-amber-200 bg-amber-50 text-amber-800"
+            }`}>
+              {activeDocument.status === "verified" ? t("verified") : activeDocument.status === "likely_forged" ? t("likely_forged") : t("needs_review")}
+            </span>
             <button
               type="button"
-              onClick={() => setIsMobileInspectorOpen(!isMobileInspectorOpen)}
-              className="w-full flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-xs"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={createScan.isPending || isAnalyzing}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-indigo-700 px-3 text-xs font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
             >
-              <span className="flex items-center gap-1.5">
-                <Crosshair className="h-3.5 w-3.5 text-indigo-600" />
-                <span>Document Specimen Inspector</span>
-              </span>
-              <span className="text-indigo-600 text-[11px] font-semibold">
-                {isMobileInspectorOpen ? "Collapse Drawer ▲" : "Expand Drawer ▼"}
-              </span>
+              <UploadCloud className="h-3.5 w-3.5" />
+              {createScan.isPending || isAnalyzing ? t("verifying_specimen") : t("verify_specimen_action")}
             </button>
           </div>
+        </header>
 
-          <div className={`${isMobileInspectorOpen ? "block" : "hidden xl:block"} min-w-0 xl:h-full`}>
-            <ForensicSpecimenLoupe
-              document={activeDocument}
-              selectedCheckId={selectedCheckId}
-              onSelectCheck={handleSelectCheck}
-              onFileIngest={handleFileIngest}
-              isIngesting={createScan.isPending || isAnalyzing}
-            />
+        <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)]">
+          <div>
+            <h2 className="text-xs font-semibold uppercase text-slate-500">{t("core_checks")}</h2>
+            <ul className="mt-2 divide-y divide-slate-100">
+              {coreChecks.map((check) => (
+                <li key={check.label} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <span className="font-medium text-slate-700">{check.label}</span>
+                  <span className={`shrink-0 text-xs font-semibold ${
+                    check.result === "pass" ? "text-emerald-700" :
+                    check.result === "flag" ? "text-rose-700" : "text-slate-500"
+                  }`}>
+                    {check.result === "pass" ? t("check_passed") : check.result === "flag" ? t("check_flagged") : t("check_unavailable")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={`flex flex-col justify-center rounded-md border p-4 ${
+            isVerified ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"
+          }`}>
+            <span className="text-[11px] font-semibold uppercase text-slate-500">{t("system_directive")}</span>
+            <strong className={`mt-1 text-base ${isVerified ? "text-emerald-900" : "text-rose-900"}`}>
+              {isVerified ? t("directive_clear") : t("directive_hold")}
+            </strong>
+            <span className="mt-2 text-xs text-slate-600">{activeDocument.filename}</span>
           </div>
         </div>
 
-        {/* Columns 6-12: High-Density Forensic Telemetry Matrix (All 11 Checks) */}
-        <div className="min-w-0 flex flex-col justify-between xl:col-span-7 xl:h-full xl:overflow-hidden">
-          <ForensicParametersTable
-            document={activeDocument}
-            selectedCheckId={selectedCheckId}
-            onSelectParam={handleSelectParam}
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Bottom Specimen Switcher Ledger */}
       <div className="p-3 sm:p-3.5 rounded-xl border border-slate-200/80 bg-white shadow-xs">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-slate-800 font-bold text-xs uppercase tracking-wide">
-              Specimen Ledger ({allDocuments.length})
-            </span>
-            <span className="text-slate-400 text-[11px] hidden sm:inline">
-              Select record to inspect live telemetry
+              {t("recent_specimens")} ({allDocuments.length})
             </span>
           </div>
-
-          <Link
-            href="/history"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1"
-          >
-            <span>Audit Trail</span>
-            <ArrowRight className="h-3 w-3" />
-          </Link>
         </div>
 
         {/* Horizontal Specimen Chip Strip */}
@@ -511,7 +360,6 @@ export default function Dashboard() {
                 type="button"
                 onClick={() => {
                   setSelectedDocId(doc.id);
-                  setSelectedCheckId(null);
                 }}
                 className={`shrink-0 flex items-center gap-2 p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
                   isSelected
