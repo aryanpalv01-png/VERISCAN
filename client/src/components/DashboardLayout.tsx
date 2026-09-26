@@ -38,6 +38,7 @@ import { Button } from "./ui/button";
 import { AshokaChakra } from "./VeriScanLogo";
 import { GovMasthead } from "./common/GovMasthead";
 import { useI18n } from "@/contexts/I18nContext";
+import { safeStorageGetItem, safeStorageSetItem } from "@/lib/safeStorage";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
@@ -61,13 +62,14 @@ export default function DashboardLayout({
   allowGuest?: boolean;
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+    const saved = safeStorageGetItem("localStorage", SIDEBAR_WIDTH_KEY);
+    const parsedWidth = saved ? Number.parseInt(saved, 10) : DEFAULT_WIDTH;
+    return Number.isFinite(parsedWidth) ? parsedWidth : DEFAULT_WIDTH;
   });
   const { loading, user, logout } = useAuth();
 
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    safeStorageSetItem("localStorage", SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
   if (loading) return <DashboardLayoutSkeleton />;

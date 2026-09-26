@@ -837,10 +837,17 @@ export default function Home() {
           <nav aria-label="Government resources" className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-600 sm:justify-start">
             <a href="https://www.india.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Government of India</a>
             <a href="https://www.meity.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">MeitY</a>
+            <a href="https://www.mha.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Ministry of Home Affairs</a>
+            <a href="https://boi.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Bureau of Immigration</a>
             <a href="https://www.digitalindia.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Digital India</a>
+            <a href="https://www.sih.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">Smart India Hackathon 2026</a>
             <a href="https://www.mygov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">MyGov</a>
             <a href="https://uidai.gov.in/" target="_blank" rel="noreferrer" className="hover:text-indigo-700">UIDAI</a>
           </nav>
+
+          <div className="mt-5 border-t border-slate-100 pt-4 text-center text-[11px] text-slate-500 sm:text-left">
+            © 2026 VeriScan · Team AntiXos · Smart India Hackathon
+          </div>
         </div>
       </footer>
     </div>

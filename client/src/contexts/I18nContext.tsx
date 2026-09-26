@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import { safeStorageGetItem, safeStorageSetItem } from "@/lib/safeStorage";
 
 export type Language = "en" | "hi" | "mr";
 
@@ -571,7 +572,7 @@ const STORAGE_KEY = "veriscan_language";
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     if (typeof window === "undefined") return "en";
-    const saved = localStorage.getItem(STORAGE_KEY) as Language;
+    const saved = safeStorageGetItem("localStorage", STORAGE_KEY) as Language | null;
     if (saved && (saved === "en" || saved === "hi" || saved === "mr")) {
       return saved;
     }
@@ -581,7 +582,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, lang);
+      safeStorageSetItem("localStorage", STORAGE_KEY, lang);
     }
   };
 

@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
-  supabase,
+  isSupabaseConfigured,
   getAuthRedirectUrl,
   signUpWithEmailPassword,
   signInWithEmailPassword,
@@ -124,9 +124,12 @@ export function Auth({ params }: { params?: { mode?: string } }) {
     setIsLoading(true);
 
     try {
+      if (!isSupabaseConfigured) {
+        throw new Error("Email authentication is not configured. Please contact the administrator.");
+      }
+
       const redirectUrl = getAuthRedirectUrl("/dashboard");
 
-      // 1. Register with Supabase Auth (configured with production redirect URL)
       const supabaseResult = await signUpWithEmailPassword({
         email: cleanEmail,
         password: regPassword,
@@ -134,27 +137,26 @@ export function Auth({ params }: { params?: { mode?: string } }) {
         redirectTo: redirectUrl,
       });
 
-      // 2. Synchronize with local / server auth store
-      try {
-        await register({
-          email: cleanEmail,
-          password: regPassword,
-          name: cleanName,
-        });
-      } catch (serverErr: any) {
-        console.warn("Server registration sync notice:", serverErr);
+      if (!supabaseResult.success) {
+        const message = supabaseResult.message || "Registration failed. Please try again.";
+        throw new Error(
+          message.includes("User already registered") || message.includes("already exists")
+            ? "An account with this email already exists. Please sign in instead."
+            : message
+        );
       }
 
-      if (!supabaseResult.success && supabaseResult.message) {
-        // If Supabase returned an error (e.g. rate limit), check if server registration succeeded
-        if (supabaseResult.message.includes("User already registered") || supabaseResult.message.includes("already exists")) {
-          setError("An account with this email already exists. Please sign in instead.");
-          return;
-        }
-      }
-
-      // Check if session was auto-confirmed or requires email confirmation
       if (supabaseResult.data?.session?.user) {
+        try {
+          await register({
+            email: cleanEmail,
+            password: regPassword,
+            name: cleanName,
+          });
+        } catch (serverErr: any) {
+          console.warn("Backend session sync notice:", serverErr);
+        }
+
         toast.success("Account created successfully!", {
           description: "Welcome to VeriScan National Document Forensics.",
         });
@@ -162,9 +164,8 @@ export function Auth({ params }: { params?: { mode?: string } }) {
         return;
       }
 
-      // If email confirmation is enabled on Supabase project:
       setRegistrationSuccess(true);
-      const msg = `Account created! If your agency requires email verification, a confirmation link pointing to ${redirectUrl} was sent to ${cleanEmail}. You may also sign in directly.`;
+      const msg = `Account created. Check ${cleanEmail} for the confirmation link before signing in.`;
       setSuccessMessage(msg);
       toast.success("Registration Successful", { description: msg });
     } catch (err: any) {
@@ -194,13 +195,20 @@ export function Auth({ params }: { params?: { mode?: string } }) {
     setIsLoading(true);
 
     try {
-      // 1. Try Supabase Auth password sign-in
+      if (!isSupabaseConfigured) {
+        throw new Error("Email authentication is not configured. Please contact the administrator.");
+      }
+
       const supabaseResult = await signInWithEmailPassword({
         email: cleanEmail,
         password: loginPassword,
       });
 
-      // 2. Also authenticate against server session
+      if (!supabaseResult.success) {
+        throw new Error(supabaseResult.message || "Invalid email or password.");
+      }
+
+      // The server session is supplementary; Supabase is the persistent password authority.
       try {
         await login({
           email: cleanEmail,
@@ -208,19 +216,6 @@ export function Auth({ params }: { params?: { mode?: string } }) {
         });
       } catch (serverErr: any) {
         console.warn("Server login sync note:", serverErr);
-        // If server failed but supabase succeeded, use supabase session
-        if (!supabaseResult.success) {
-          throw serverErr;
-        }
-      }
-
-      if (!supabaseResult.success && supabaseResult.message) {
-        // If supabase failed and server didn't succeed
-        if (!user && !localStorage.getItem("veriscan_auth_token")) {
-          setError(supabaseResult.message);
-          toast.error(`Sign In Error: ${supabaseResult.message}`);
-          return;
-        }
       }
 
       toast.success("Signed in successfully", {
@@ -355,9 +350,10 @@ export function Auth({ params }: { params?: { mode?: string } }) {
         description: "Authenticated as Senior Forensic Investigator (National Cyber Crime Portal).",
       });
       setLocation("/dashboard");
-    } catch {
-      localStorage.setItem("veriscan_auth_token", "demo-token");
-      setLocation("/dashboard");
+    } catch (err: any) {
+      const msg = err?.message || "Demo access is temporarily unavailable.";
+      setError(msg);
+      toast.error("Demo sign in failed", { description: msg });
     } finally {
       setIsLoading(false);
     }

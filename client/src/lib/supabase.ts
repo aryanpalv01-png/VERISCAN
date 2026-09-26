@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { safeLocalStorageAdapter } from "@/lib/safeStorage";
 
 // Supabase credentials for VeriScan Govt Forensic Architecture
 export const SUPABASE_URL =
@@ -27,6 +28,7 @@ export const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      storage: safeLocalStorageAdapter,
     },
   }
 );

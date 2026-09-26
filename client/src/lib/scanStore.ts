@@ -1,7 +1,12 @@
 import { demoDocuments, VerificationDocument } from "@/lib/veriscan";
+import { safeStorageSetItem } from "@/lib/safeStorage";
 
 function canUseStorage() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  try {
+    return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  } catch {
+    return false;
+  }
 }
 
 export function getCurrentUserIdentifier(): string {
@@ -50,13 +55,11 @@ export function writeUserScan(document: VerificationDocument, userIdentifier?: s
   const key = getUserStorageKey(userIdentifier);
   const current = readUserScans(userIdentifier);
   const next = [document, ...current.filter((item) => item.id !== document.id)].slice(0, 50);
-  window.localStorage.setItem(key, JSON.stringify(next));
+  safeStorageSetItem("localStorage", key, JSON.stringify(next));
 
   // Direct document key and global latest scan pointer
-  try {
-    window.localStorage.setItem(`veriscan-doc-${document.id}`, JSON.stringify(document));
-    window.localStorage.setItem("veriscan-latest-scan", JSON.stringify(document));
-  } catch {}
+  safeStorageSetItem("localStorage", `veriscan-doc-${document.id}`, JSON.stringify(document));
+  safeStorageSetItem("localStorage", "veriscan-latest-scan", JSON.stringify(document));
 }
 
 // Aliases for backward compatibility

@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
+import { safeStorageRemoveItem, safeStorageSetItem } from "@/lib/safeStorage";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type UseAuthOptions = {
@@ -12,17 +13,12 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
 
-  const [supabaseUser, setSupabaseUser] = useState<any>(() => {
-    try {
-      const saved = localStorage.getItem("veriscan_local_user");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [supabaseUser, setSupabaseUser] = useState<any>(null);
+  const [supabaseLoading, setSupabaseLoading] = useState(true);
 
   // Listen to Supabase Auth state changes (including email confirmation / magic link redirects)
   useEffect(() => {
+    let isMounted = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const u = {
@@ -36,15 +32,20 @@ export function useAuth(options?: UseAuthOptions) {
           role: session.user.user_metadata?.role || "analyst",
         };
         setSupabaseUser(u);
-        localStorage.setItem("veriscan_local_user", JSON.stringify(u));
-        localStorage.setItem("veriscan_auth_token", session.access_token);
+        safeStorageSetItem("localStorage", "veriscan_local_user", JSON.stringify(u));
+        safeStorageSetItem("localStorage", "veriscan_auth_token", session.access_token);
         utils.auth.me.setData(undefined, u as any);
       }
+      if (isMounted) setSupabaseLoading(false);
+    }).catch((error) => {
+      console.warn("[Auth] Could not restore the saved Supabase session.", error);
+      if (isMounted) setSupabaseLoading(false);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      setSupabaseLoading(false);
       if (session?.user) {
         const u = {
           id: session.user.id,
@@ -57,8 +58,8 @@ export function useAuth(options?: UseAuthOptions) {
           role: session.user.user_metadata?.role || "analyst",
         };
         setSupabaseUser(u);
-        localStorage.setItem("veriscan_local_user", JSON.stringify(u));
-        localStorage.setItem("veriscan_auth_token", session.access_token);
+        safeStorageSetItem("localStorage", "veriscan_local_user", JSON.stringify(u));
+        safeStorageSetItem("localStorage", "veriscan_auth_token", session.access_token);
         utils.auth.me.setData(undefined, u as any);
 
         if (typeof window !== "undefined" && window.location.hash.includes("access_token")) {
@@ -66,11 +67,12 @@ export function useAuth(options?: UseAuthOptions) {
         }
       } else if (event === "SIGNED_OUT") {
         setSupabaseUser(null);
-        localStorage.removeItem("veriscan_local_user");
+        safeStorageRemoveItem("localStorage", "veriscan_local_user");
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [utils]);
@@ -83,7 +85,7 @@ export function useAuth(options?: UseAuthOptions) {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
       if (data?.token) {
-        localStorage.setItem("veriscan_auth_token", data.token);
+        safeStorageSetItem("localStorage", "veriscan_auth_token", data.token);
       }
       utils.auth.me.setData(undefined, data.user);
     },
@@ -92,7 +94,7 @@ export function useAuth(options?: UseAuthOptions) {
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: (data) => {
       if (data?.token) {
-        localStorage.setItem("veriscan_auth_token", data.token);
+        safeStorageSetItem("localStorage", "veriscan_auth_token", data.token);
       }
       utils.auth.me.setData(undefined, data.user);
     },
@@ -101,7 +103,7 @@ export function useAuth(options?: UseAuthOptions) {
   const quickLoginMutation = trpc.auth.quickLogin.useMutation({
     onSuccess: (data) => {
       if (data?.token) {
-        localStorage.setItem("veriscan_auth_token", data.token);
+        safeStorageSetItem("localStorage", "veriscan_auth_token", data.token);
       }
       utils.auth.me.setData(undefined, data.user);
     },
@@ -112,7 +114,7 @@ export function useAuth(options?: UseAuthOptions) {
   const verifyOtpMutation = trpc.auth.verifyOtp.useMutation({
     onSuccess: (data) => {
       if (data?.token) {
-        localStorage.setItem("veriscan_auth_token", data.token);
+        safeStorageSetItem("localStorage", "veriscan_auth_token", data.token);
       }
       utils.auth.me.setData(undefined, data.user);
     },
@@ -173,11 +175,15 @@ export function useAuth(options?: UseAuthOptions) {
       // Ignore network errors
     } finally {
       // 1. Wipe local and session credentials
-      localStorage.removeItem("veriscan_auth_token");
-      localStorage.removeItem("veriscan_local_user");
-      localStorage.removeItem("manus-cookie");
-      localStorage.removeItem("manus-runtime-user-info");
-      sessionStorage.clear();
+      safeStorageRemoveItem("localStorage", "veriscan_auth_token");
+      safeStorageRemoveItem("localStorage", "veriscan_local_user");
+      safeStorageRemoveItem("localStorage", "manus-cookie");
+      safeStorageRemoveItem("localStorage", "manus-runtime-user-info");
+      try {
+        sessionStorage.clear();
+      } catch (error) {
+        console.warn("[Storage] Could not clear session storage during sign out.", error);
+      }
       setSupabaseUser(null);
 
       // 2. Clear browser cookies directly
@@ -205,6 +211,7 @@ export function useAuth(options?: UseAuthOptions) {
     return {
       user: activeUser,
       loading:
+        supabaseLoading ||
         meQuery.isLoading ||
         loginMutation.isPending ||
         registerMutation.isPending ||
@@ -224,6 +231,7 @@ export function useAuth(options?: UseAuthOptions) {
   }, [
     meQuery.data,
     supabaseUser,
+    supabaseLoading,
     meQuery.error,
     meQuery.isLoading,
     loginMutation.isPending,
