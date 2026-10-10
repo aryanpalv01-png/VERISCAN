@@ -7,6 +7,8 @@ import {
   BorderVerificationResponse,
   verifyBorderDocument,
 } from "@/lib/borderApi";
+import { SmoothScrollProvider } from "@/components/common/SmoothScrollProvider";
+import { CinematicScrollHero } from "@/components/3d/CinematicScrollHero";
 import {
   ArrowRight,
   UploadCloud,
@@ -96,7 +98,7 @@ export default function Home() {
     if (specimenId === "aadhaar_rahul_sharma") {
       setActiveSpecimenTab("genuine");
       setTerminalDocType("National ID");
-      setPreviewImage("/test_samples/sample_aadhaar.png");
+      setPreviewImage("/test_samples/genuine_verified_aadhaar.jpg");
       setTerminalResult({
         status: "success",
         document_type: "National ID",
@@ -126,7 +128,7 @@ export default function Home() {
     } else if (specimenId === "pan_rohit_patel") {
       setActiveSpecimenTab("genuine");
       setTerminalDocType("PAN Card");
-      setPreviewImage("/test_samples/sample_pan.png");
+      setPreviewImage("/test_samples/genuine_verified_aadhaar.jpg");
       setTerminalResult({
         status: "success",
         document_type: "PAN Card",
@@ -156,7 +158,7 @@ export default function Home() {
     } else if (specimenId === "passport_standard") {
       setActiveSpecimenTab("genuine");
       setTerminalDocType("Passport");
-      setPreviewImage("/test_samples/sample_aadhaar.png");
+      setPreviewImage("/test_samples/genuine_verified_aadhaar.jpg");
       setTerminalResult({
         status: "success",
         document_type: "Passport",
@@ -186,7 +188,7 @@ export default function Home() {
     } else if (specimenId === "aadhaar_tampered_priya") {
       setActiveSpecimenTab("forged");
       setTerminalDocType("National ID");
-      setPreviewImage("/test_samples/sample_aadhaar.png");
+      setPreviewImage("/test_samples/fake_forged_aadhaar.jpg");
       setTerminalResult({
         status: "success",
         document_type: "National ID",
@@ -257,182 +259,142 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Official Government Masthead with Language Switcher */}
-      <GovMasthead theme="light" />
+    <SmoothScrollProvider>
+      <div className="min-h-screen flex flex-col bg-[#060913] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+        {/* Official Government Masthead with Language Switcher */}
+        <GovMasthead theme="dark" />
 
-      {/* Main Navigation Bar */}
-      <nav className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 h-16">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-base shadow-xs">
-              V
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-slate-900">
-                  VeriScan
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  SIH-2026
-                </span>
+        {/* Main Navigation Bar */}
+        <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#060913]/85 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 h-16">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white font-black text-base shadow-lg shadow-indigo-500/25 border border-indigo-400/40">
+                V
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-base tracking-tight text-white">
+                    VeriScan
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                    SIH-2026
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  {user?.email || t("officer")}
-                </span>
-                <Button
-                  size="sm"
-                  onClick={() => setLocation("/dashboard")}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs hover:shadow transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
-                >
-                  <span>{t("nav_dashboard")}</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={async () => {
-                    await logout();
-                  }}
-                  className="text-xs font-semibold text-slate-600 hover:text-slate-900 h-8 px-2.5 rounded-lg gap-1 cursor-pointer"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{t("sign_out")}</span>
-                </Button>
-              </div>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLocation("/auth/login")}
-                  className="text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg gap-1.5 h-8 px-3 cursor-pointer"
-                >
-                  <LogIn className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>{t("login")}</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setLocation("/auth/register")}
-                  aria-label={t("register")}
-                  className="text-xs font-semibold text-indigo-700 border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 rounded-lg shadow-xs gap-1.5 h-8 px-3 cursor-pointer"
-                >
-                  <UserPlus className="h-3.5 w-3.5 text-indigo-600" />
-                  <span className="hidden sm:inline">{t("register")}</span>
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setLocation("/dashboard")}
-                  className="hidden sm:inline-flex bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs hover:shadow transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
-                >
-                  <span>{t("nav_dashboard")}</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <main className="flex-1">
-        <div className="relative overflow-hidden pt-10 pb-10 sm:pt-14 sm:pb-12 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/70">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="text-center max-w-3xl mx-auto space-y-4">
-              {/* Multilingual Headline */}
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-                {t("hero_title")}
-              </h1>
-
-              {/* Subtitle */}
-              <p className="text-base sm:text-lg text-slate-600 font-normal leading-relaxed max-w-2xl mx-auto">
-                {t("hero_subtitle")}
-              </p>
-
-              {/* Action Triggers */}
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                <Button
-                  size="lg"
-                  onClick={() => setLocation("/dashboard")}
-                  className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow transition-all gap-2 cursor-pointer"
-                >
-                  <span>{t("btn_open_workspace")}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  size="lg"
-                  variant="outline"
-                  disabled={isUploading}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-11 px-5 rounded-xl border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm shadow-xs gap-2 disabled:opacity-50 cursor-pointer"
-                >
-                  <UploadCloud className="h-4 w-4 text-indigo-600" />
-                  <span>{isUploading ? t("btn_analyzing") : t("btn_ingest_file")}</span>
-                </Button>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,application/pdf"
-                  className="hidden"
-                  onChange={handleHeroFileUpload}
-                />
-              </div>
-
+            <div className="flex items-center gap-2 sm:gap-3">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 border border-white/10">
+                    {user?.email || t("officer")}
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={() => setLocation("/dashboard")}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-indigo-500/20 transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
+                  >
+                    <span>{t("nav_dashboard")}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      await logout();
+                    }}
+                    className="text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 h-8 px-2.5 rounded-lg gap-1 cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{t("sign_out")}</span>
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocation("/auth/login")}
+                    className="text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 rounded-lg gap-1.5 h-8 px-3 cursor-pointer"
+                  >
+                    <LogIn className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>{t("login")}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLocation("/auth/register")}
+                    aria-label={t("register")}
+                    className="text-xs font-semibold text-indigo-300 border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg shadow-xs gap-1.5 h-8 px-3 cursor-pointer"
+                  >
+                    <UserPlus className="h-3.5 w-3.5 text-indigo-400" />
+                    <span className="hidden sm:inline">{t("register")}</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setLocation("/dashboard")}
+                    className="hidden sm:inline-flex bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-indigo-500/20 transition-all gap-1.5 h-8 px-3.5 cursor-pointer"
+                  >
+                    <span>{t("nav_dashboard")}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
             </div>
-
           </div>
-        </div>
+        </nav>
+
+        {/* Cinematic 3D Scroll Hero Narrative */}
+        <CinematicScrollHero />
 
         {/* Forensic Methodology Section: Differentiating Real vs. Fake Documents */}
-        <section className="py-14 sm:py-18 bg-white border-b border-slate-200/80">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="mx-auto mb-7 max-w-3xl text-center">
-              <h2 className="text-xl font-bold text-slate-900">
-                {t("methodology_title")}
-              </h2>
-            </div>
+        <main className="flex-1 bg-white text-slate-900 border-t border-slate-200">
+          <section className="py-14 sm:py-18 bg-white border-b border-slate-200/80">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="mx-auto mb-7 max-w-3xl text-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 mb-3">
+                  <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
+                  STATUTORY VERIFICATION METHODOLOGY
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+                  {t("methodology_title")}
+                </h2>
+                <p className="mt-2 text-sm text-slate-600 max-w-2xl mx-auto">
+                  How VeriScan rigorously isolates manipulated demographic data, pixel-level splicing, and invalid mathematical checksums across official credentials.
+                </p>
+              </div>
 
-            <div className="mx-auto grid max-w-5xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-              {[
-                t("method_step_1"),
-                t("method_step_2"),
-                t("method_step_3"),
-                t("method_step_4"),
-                t("method_step_5"),
-                t("method_step_6"),
-              ].map((method, index) => (
-                <div key={method} className="flex min-w-0 items-center gap-2 border-b border-slate-200 py-2 text-sm font-medium text-slate-700">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">
-                    {index + 1}
-                  </span>
-                  <span>{method}</span>
-                </div>
-              ))}
-            </div>
-
-            {false && <>
-            {/* 6 Core Pillars Side-by-Side Comparison Matrix */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Pillar 1: ELA */}
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
-                <div>
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="p-2 rounded-xl bg-indigo-100/80 text-indigo-700">
-                      <Search className="h-4 w-4" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
-                      {t("pillar_1_name")}
-                    </h3>
+              <div className="mx-auto grid max-w-5xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 mb-12">
+                {[
+                  t("method_step_1"),
+                  t("method_step_2"),
+                  t("method_step_3"),
+                  t("method_step_4"),
+                  t("method_step_5"),
+                  t("method_step_6"),
+                ].map((method, index) => (
+                  <div key={method} className="flex min-w-0 items-center gap-2 border-b border-slate-200 py-2.5 text-sm font-medium text-slate-700">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">
+                      {index + 1}
+                    </span>
+                    <span>{method}</span>
                   </div>
+                ))}
+              </div>
+
+              {/* 6 Core Pillars Side-by-Side Comparison Matrix */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Pillar 1: ELA */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between hover:border-indigo-300 transition-colors shadow-xs">
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="p-2 rounded-xl bg-indigo-100/80 text-indigo-700">
+                        <Search className="h-4 w-4" />
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                        {t("pillar_1_name")}
+                      </h3>
+                    </div>
 
                   <div className="space-y-3 text-xs">
                     <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
@@ -770,7 +732,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            </>}
           </div>
         </section>
       </main>
@@ -851,5 +812,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  </SmoothScrollProvider>
   );
 }
